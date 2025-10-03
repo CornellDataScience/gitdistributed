@@ -6,6 +6,7 @@ using namespace std::filesystem;
 
 void init();
 void add(string name);
+void commit();
 
 int main() {
     cout << "Hello world" << endl;
@@ -23,4 +24,31 @@ void init() {
 
 void add(string name) {
     copy(name, "gitd/objects" + name);
+}
+
+void commit() {
+    const path gitdpath = ".gitd";
+
+    if (!exists(gitdpath)) {
+        cout << "not a gitd repository" << endl;
+        return;
+    }
+
+    const path objectspath = ".gitd/objects";
+    const path commitspath = ".gitd/commits";
+
+    if (!exists(objectspath) || !exists(commitspath)) {
+        cout << "invalid gitd repository" << endl;
+    }
+
+    // Assuming multiple files and no overriding commits
+    for (const auto& file : directory_iterator(objectspath)) {
+        try {
+            rename(file.path(), commitspath / file.path().filename());
+        } catch (const filesystem_error& e) {
+            cout << "Error moving file " << file.path() << ": " << e.what() << endl;
+        }
+    }
+
+    return;
 }
