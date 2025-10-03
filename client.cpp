@@ -8,8 +8,31 @@ void init();
 void add(string name);
 void commit();
 
-int main() {
-    cout << "Hello world" << endl;
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        cout << "no gitd command provided" << endl;
+        return 1;
+    }
+
+    string command = argv[1];
+
+    if (command == "init") {
+        init();
+    } else if (command == "add") {
+        if (argc < 3) {
+            cout << "usage: gitd add [path]" << endl;
+            return 1;
+        }
+
+        string file = argv[2];
+        add(file);
+    } else if (command == "commit") {
+        commit();
+    } else {
+        cout << "'" << command << "' is not a git command" << endl;
+        return 1;
+    }
+
     return 0;
 }
 
@@ -46,7 +69,7 @@ void commit() {
         try {
             rename(file.path(), commitspath / file.path().filename());
         } catch (const filesystem_error& e) {
-            cout << "Error moving file " << file.path() << ": " << e.what() << endl;
+            cout << "error moving file " << file.path() << ": " << e.what() << endl;
         }
     }
 
