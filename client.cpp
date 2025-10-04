@@ -13,10 +13,10 @@ int main() {
 }
 
 void init() {
-    path folder = "./gitd";
+    path folder = ".gitd";
     if (!exists(folder)) { create_directory(folder); }
     
-    path subfolder1 = "./gitd/objects", subfolder2 = "./gitd/commits";
+    path subfolder1 = ".gitd/objects/", subfolder2 = ".gitd/commits/";
     if (!exists(subfolder1)) { create_directory(subfolder1); }
     if (!exists(subfolder2)) { create_directory(subfolder2); }
 }
