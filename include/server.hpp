@@ -8,8 +8,8 @@ class TcpServer
 public:
   TcpServer(int port);
   void connect();
-  bool receive(char *buffer);
-  void respond(Message message);
+  bool receive_message(char *buffer);
+  void send_message(Message message);
   // ~TcpServer();
   int server_fd;
 
