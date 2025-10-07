@@ -1,7 +1,13 @@
+#pragma once
 #include <string>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <iostream>
 #include <functional>
 #include <netinet/in.h>
+#include "parse.hpp"
 
 class TcpServer
 {

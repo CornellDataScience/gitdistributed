@@ -1,12 +1,11 @@
-#include <string>
-#include <iostream>
-#include "server.cpp"
-#include "git.hpp"
-#include "parse.hpp"
+#include "include/server.hpp"
+#include "include/git.hpp"
+#include "include/parse.hpp"
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
 
+GitNode::GitNode() {}
 
 bool GitNode::push(Message message)
 {
@@ -49,6 +48,8 @@ Message GitNode::handle_client_req(const Message &req) {
       msg = pull(req);
       break;
     }
+    default:
+      break;
   }
 
   return msg;

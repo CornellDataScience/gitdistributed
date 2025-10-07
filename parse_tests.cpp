@@ -1,11 +1,14 @@
 
-#include "parse.cpp"
-#include "server.cpp"
+#include "include/parse.hpp"
+#include <cassert>
+
+#define BUFFER_SIZE 1024
 
 void test_round_trip(const Message &original)
 {
-    std::vector<char> buf = serialize(original);
-    Message reconstructed = deserialize(buf.data());
+    char buffer[BUFFER_SIZE] = {0};
+    bool success = serialize(original, buffer);
+    Message reconstructed = deserialize(buffer);
 
     assert(reconstructed.type == original.type);
     assert(reconstructed.file_name == original.file_name);

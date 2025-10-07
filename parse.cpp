@@ -1,4 +1,4 @@
-#include "parse.hpp"
+#include "include/parse.hpp"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -25,19 +25,30 @@ char* read_bytes(const char* buff, int n) {
 
 Message deserialize(char *buffer) {
   Message deserialized;
-  MessageType code = static_cast<MessageType>(read_int(buffer));
-
+  char *p = buffer;
+  
+  MessageType code = static_cast<MessageType>(read_int(p));
+  p += sizeof(int);
   deserialized.type = code;
 
   switch(code) {
     case MessageType::CLIENT_PUSH:
     case MessageType::SERVER_PULL:
-        int file_name_size = read_int(buffer);
-        char *file_name = read_bytes(buffer, file_name_size);
-        int file_size = read_int(buffer);
-        char *file_contents = read_bytes(buffer, file_size);
-        deserialized.file_name = file_name;
-        deserialized.data = file_contents;
+    {
+        int file_name_size = read_int(p);
+        p += sizeof(int);
+        char *file_name = read_bytes(p, file_name_size);
+        p += file_name_size;
+        int file_size = read_int(p);
+        p += sizeof(int);
+        char *file_contents = read_bytes(p, file_size);
+        deserialized.file_name = std::string(file_name, file_name_size);
+        deserialized.data = std::string(file_contents, file_size);
+        free(file_name);
+        free(file_contents);
+        break;
+    }
+    default:
         break;
   }
   return deserialized;
@@ -62,6 +73,9 @@ bool serialize(const Message &msg, char *buff) {
       writeInt(p, static_cast<int>(msg.data.size()));
       std::memcpy(p, msg.data.data(), msg.data.size());
       p += msg.data.size();
+      break;
+    default:
+      break;
   }
   return true;
 }

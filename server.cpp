@@ -1,10 +1,6 @@
-#include <iostream>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include "server.hpp"
-#include "git.hpp"
+#include "include/server.hpp"
+#include "include/git.hpp"
+#include "include/parse.hpp"
 
 #define BUFFER_SIZE 1024
 
@@ -12,7 +8,6 @@ TcpServer::TcpServer(int port)
 {
     struct sockaddr_in address;
     int opt = 1;
-    int addrlen = sizeof(address);
 
     address.sin_family = AF_INET;         // IPv4
     address.sin_addr.s_addr = INADDR_ANY; // Any IP address
