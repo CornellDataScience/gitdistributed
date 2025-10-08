@@ -40,7 +40,7 @@ void init() {
     path folder = ".gitd";
     if (!exists(folder)) { create_directory(folder); }
     
-    path subfolder1 = ".gitd/objects", subfolder2 = ".gitd/commits";
+    path subfolder1 = ".gitd/objects/", subfolder2 = ".gitd/commits/";
     if (!exists(subfolder1)) { create_directory(subfolder1); }
     if (!exists(subfolder2)) { create_directory(subfolder2); }
 }
@@ -57,8 +57,8 @@ void commit() {
         return;
     }
 
-    const path objectspath = ".gitd/objects";
-    const path commitspath = ".gitd/commits";
+    const path objectspath = ".gitd/objects/";
+    const path commitspath = ".gitd/commits/";
 
     if (!exists(objectspath) || !exists(commitspath)) {
         cout << "invalid gitd repository" << endl;
