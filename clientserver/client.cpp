@@ -1,5 +1,11 @@
 #include <iostream>
 #include <filesystem>
+#include "tcp.hpp"
+#include "messages.hpp"
+
+#define PORT 8080
+#define SERVER_IP ""
+#define BUFFER_SIZE 1024
 
 using namespace std;
 using namespace std::filesystem;

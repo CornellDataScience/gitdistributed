@@ -1,17 +1,18 @@
-all: client.cpp server.cpp git.cpp parse.cpp
-	g++ -std=c++20 -Wall client.cpp -o gitd
-	g++ -std=c++20 -Wall server.cpp git.cpp parse.cpp -o server
+CLIENT_SRCS = clientserver/client.cpp clientserver/messages.cpp clientserver/tcp.cpp
+SERVER_SRCS = clientserver/server.cpp clientserver/messages.cpp clientserver/tcp.cpp gitapp/git_app.cpp
 
-client: client.cpp
-	g++ -std=c++20 -Wall client.cpp -o gitd
+all: client server
 
-server: git.cpp parse.cpp
-	g++ -std=c++20 -Wall git.cpp parse.cpp -o server
+client: $(CLIENT_SRCS)
+	g++ -std=c++20 -Wall -Iinclude $(CLIENT_SRCS) -o gitd
 
-test: parse_tests.cpp parse.cpp
-	g++ -std=c++20 -Wall parse_tests.cpp parse.cpp -o parse_tests
+server: $(SERVER_SRCS)
+	g++ -std=c++20 -Wall -Iinclude $(SERVER_SRCS) -o server
+
+test: serialization_tests.cpp clientserver/tcp.cpp clientserver/messages.cpp
+	g++ -std=c++20 -Wall -Iinclude serialization_tests.cpp clientserver/tcp.cpp clientserver/messages.cpp -o serialization_tests
 
 clean:
 	rm -f gitd
 	rm -f server
-	rm -f parse_tests
+	rm -f serialization_tests

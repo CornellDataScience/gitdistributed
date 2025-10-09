@@ -1,8 +1,11 @@
 
-#include "include/parse.hpp"
+#include "tcp.hpp"
 #include <cassert>
 
 #define BUFFER_SIZE 1024
+#define PORT 8080
+
+TcpServer server(PORT, TcpMode::SERVER);
 
 void test_round_trip(const Message &original)
 {
