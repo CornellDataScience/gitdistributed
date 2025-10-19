@@ -34,10 +34,6 @@ int main(int argc, char* argv[]) {
         add(file);
     } else if (command == "commit") {
         commit();
-    } else if (command == "push") {
-        push();
-    } else if (command == "pull") {
-        pull();
     } else {
         cout << "'" << command << "' is not a git command" << endl;
         return 1;
@@ -88,12 +84,19 @@ void commit() {
 
 void push() {
     TcpServer server(PORT, TcpMode::CLIENT);
+<<<<<<< HEAD
+=======
+    
+    std::cout << "Server listening on port " << PORT << "\n";
+    char buffer[BUFFER_SIZE] = {0};
+>>>>>>> f784e7a2ae9ded4c618546179b21973c4b08a376
     server.connect();
     std::cout << "Client connected to port " << PORT << "\n";
 
     Message msg;
     msg.type = MessageType::CLIENT_PUSH;
 
+<<<<<<< HEAD
     const path commitspath = ".gitd/commits/";
 
     // Assuming only one file in commitsfolder
@@ -136,12 +139,36 @@ void push() {
     {
         cerr << "[ERROR] request failed: " << strerror(errno) << endl;
     }
+=======
+>>>>>>> f784e7a2ae9ded4c618546179b21973c4b08a376
 }
 
 void pull() {
-    TcpServer server(PORT, TcpMode::SERVER);
-    std::cout << "Server listening on port " << PORT << "\n";
-    char buffer[BUFFER_SIZE] = {0};
-    server.connect();
+    TcpServer client(PORT, TcpMode::CLIENT);
+    std::cout << "Server listening on port " << PORT << "\n";    
+    client.connect();
+    
+    char out_buffer[BUFFER_SIZE] = {0};
+    char *p = out_buffer;
+    Message m;
+    m.type = MessageType::CLIENT_PULL;
+    client.send_message(m);
 
+    char in_buffer[BUFFER_SIZE] = {0};
+    if (!client.receive_message(inbuf)) {
+        std::cerr << "[ERROR] no response from server\n";
+        return;
+    }
+
+    Message resp = deserialize(in_buffer);
+
+    ofstream out(resp.file_name, ios::binary);
+    if (!out) {
+        cerr << "[ERROR] could not open " << resp.file_name << " for writing\n";
+        return;
+    }
+    out.write(resp.data.data(), static_cast<streamsize>(resp.data.size()));
+    out.close();
+
+    cout << "Pulled " << resp.file_name << " (" << resp.data.size() << " bytes)\n";
 }
