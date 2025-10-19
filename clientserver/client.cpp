@@ -87,16 +87,55 @@ void commit() {
 }
 
 void push() {
-    TcpServer server(PORT, TcpMode::SERVER);
-    std::cout << "Server listening on port " << PORT << "\n";
-    char buffer[BUFFER_SIZE] = {0};
+    TcpServer server(PORT, TcpMode::CLIENT);
     server.connect();
-
+    std::cout << "Client connected to port " << PORT << "\n";
 
     Message msg;
     msg.type = MessageType::CLIENT_PUSH;
-    // Message m = MessageType::CLIENT_PUSH;
-    // server.send_message(MessageType::CLIENT_PUSH);
+
+    const path commitspath = ".gitd/commits/";
+
+    // Assuming only one file in commitsfolder
+    for (const auto& file : directory_iterator(commitspath)) {
+        try {
+            msg.file_name = file.path().filename().string();
+            std::cout << "Found file: " << filename << std::endl;
+
+            // Open the file
+            std::ifstream file(entry.path());
+
+            // Check if the file opened successfully
+            if (file.is_open()) {
+                std::string content((std::istreambuf_iterator<char>(file)),
+                                    std::istreambuf_iterator<char>());
+                msg.data = content;
+            } else {
+                std::cerr << "Failed to open file." << std::endl;
+            }
+        } catch (const filesystem_error& e) {
+            cout << "error reading file " << file.path() << ": " << e.what() << endl;
+        }
+    }
+
+    // TODO: handle deleting from commits folder
+
+    // make continuous requests
+    server.send_message(msg);
+
+    char buffer[BUFFER_SIZE] = {0};
+    bool received = server.receive_message(buffer);
+    if (received)
+    {
+        Message req = deserialize(buffer);
+        if (req.type == MessageType::SERVER_PUSH) {
+            cout << "push successful" << endl;
+        }
+    }
+    else
+    {
+        cerr << "[ERROR] request failed: " << strerror(errno) << endl;
+    }
 }
 
 void pull() {
