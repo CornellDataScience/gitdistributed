@@ -34,6 +34,10 @@ int main(int argc, char* argv[]) {
         add(file);
     } else if (command == "commit") {
         commit();
+    } else if (command == "push") {
+        push();
+    } else if (command == "pull") {
+        pull();
     } else {
         cout << "'" << command << "' is not a git command" << endl;
         return 1;
@@ -84,19 +88,12 @@ void commit() {
 
 void push() {
     TcpServer server(PORT, TcpMode::CLIENT);
-<<<<<<< HEAD
-=======
-    
-    std::cout << "Server listening on port " << PORT << "\n";
-    char buffer[BUFFER_SIZE] = {0};
->>>>>>> f784e7a2ae9ded4c618546179b21973c4b08a376
     server.connect();
     std::cout << "Client connected to port " << PORT << "\n";
 
     Message msg;
     msg.type = MessageType::CLIENT_PUSH;
 
-<<<<<<< HEAD
     const path commitspath = ".gitd/commits/";
 
     // Assuming only one file in commitsfolder
@@ -139,8 +136,6 @@ void push() {
     {
         cerr << "[ERROR] request failed: " << strerror(errno) << endl;
     }
-=======
->>>>>>> f784e7a2ae9ded4c618546179b21973c4b08a376
 }
 
 void pull() {
