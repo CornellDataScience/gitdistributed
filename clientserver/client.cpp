@@ -15,12 +15,15 @@ void add(string name);
 void commit();
 
 int main(int argc, char* argv[]) {
-    TcpServer server(PORT, TcpMode::SERVER);
-
     if (argc < 2) {
         cout << "no gitd command provided" << endl;
         return 1;
     }
+
+    TcpServer server(PORT, TcpMode::SERVER);
+    std::cout << "Server listening on port " << PORT << "\n";
+    char buffer[BUFFER_SIZE] = {0};
+    server.connect();
 
     string command = argv[1];
 
@@ -37,9 +40,9 @@ int main(int argc, char* argv[]) {
     } else if (command == "commit") {
         commit();
     } else if (command == "push") {
-        push();
+        push(server);
     } else if (command == "pull") {
-        pull();
+        pull(server);
     } else {
         cout << "'" << command << "' is not a git command" << endl;
         return 1;
@@ -88,6 +91,13 @@ void commit() {
     return;
 }
 
-void push() {}
+void push(TcpServer server) {
+    Message msg;
+    msg.type = MessageType::CLIENT_PUSH;
+    // Message m = MessageType::CLIENT_PUSH;
+    // server.send_message(MessageType::CLIENT_PUSH);
+}
 
-void pull() {}
+void pull(TcpServer server) {
+    //
+}
