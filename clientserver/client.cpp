@@ -15,6 +15,8 @@ void add(string name);
 void commit();
 
 int main(int argc, char* argv[]) {
+    TcpServer server(PORT, TcpMode::SERVER);
+
     if (argc < 2) {
         cout << "no gitd command provided" << endl;
         return 1;
@@ -34,6 +36,10 @@ int main(int argc, char* argv[]) {
         add(file);
     } else if (command == "commit") {
         commit();
+    } else if (command == "push") {
+        push();
+    } else if (command == "pull") {
+        pull();
     } else {
         cout << "'" << command << "' is not a git command" << endl;
         return 1;
@@ -81,3 +87,7 @@ void commit() {
 
     return;
 }
+
+void push() {}
+
+void pull() {}
