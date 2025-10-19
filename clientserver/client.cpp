@@ -100,10 +100,11 @@ void pull() {
     std::cout << "Server listening on port " << PORT << "\n";    
     client.connect();
     
-    char out_buffer[sizeof(int)] = {0};
+    char out_buffer[BUFFER_SIZE] = {0};
     char *p = out_buffer;
-    writeInt(p, static_cast<int>(MessageType::SERVER_PULL));
-    client.send_message(out_buffer);
+    Message m;
+    m.type = MessageType::CLIENT_PULL;
+    client.send_message(m);
 
     char in_buffer[BUFFER_SIZE] = {0};
     if (!client.receive_message(inbuf)) {
@@ -111,15 +112,15 @@ void pull() {
         return;
     }
 
-    Message response = deserialize(in_buffer);
-    
-    std::ofstream out(resp.file_name, std::ios::binary);
+    Message resp = deserialize(in_buffer);
+
+    ofstream out(resp.file_name, ios::binary);
     if (!out) {
-        std::cerr << "[ERROR] could not open " << resp.file_name << " for writing\n";
+        cerr << "[ERROR] could not open " << resp.file_name << " for writing\n";
         return;
     }
-    out.write(resp.data.data(), static_cast<std::streamsize>(resp.data.size()));
+    out.write(resp.data.data(), static_cast<streamsize>(resp.data.size()));
     out.close();
 
-    std::cout << "Pulled " << resp.file_name << " (" << resp.data.size() << " bytes)\n";
+    cout << "Pulled " << resp.file_name << " (" << resp.data.size() << " bytes)\n";
 }
