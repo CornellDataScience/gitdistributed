@@ -20,11 +20,6 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    TcpServer server(PORT, TcpMode::SERVER);
-    std::cout << "Server listening on port " << PORT << "\n";
-    char buffer[BUFFER_SIZE] = {0};
-    server.connect();
-
     string command = argv[1];
 
     if (command == "init") {
@@ -40,9 +35,9 @@ int main(int argc, char* argv[]) {
     } else if (command == "commit") {
         commit();
     } else if (command == "push") {
-        push(server);
+        push();
     } else if (command == "pull") {
-        pull(server);
+        pull();
     } else {
         cout << "'" << command << "' is not a git command" << endl;
         return 1;
@@ -91,13 +86,23 @@ void commit() {
     return;
 }
 
-void push(TcpServer server) {
+void push() {
+    TcpServer server(PORT, TcpMode::SERVER);
+    std::cout << "Server listening on port " << PORT << "\n";
+    char buffer[BUFFER_SIZE] = {0};
+    server.connect();
+
+
     Message msg;
     msg.type = MessageType::CLIENT_PUSH;
     // Message m = MessageType::CLIENT_PUSH;
     // server.send_message(MessageType::CLIENT_PUSH);
 }
 
-void pull(TcpServer server) {
-    //
+void pull() {
+    TcpServer server(PORT, TcpMode::SERVER);
+    std::cout << "Server listening on port " << PORT << "\n";
+    char buffer[BUFFER_SIZE] = {0};
+    server.connect();
+
 }
