@@ -34,10 +34,6 @@ int main(int argc, char* argv[]) {
         add(file);
     } else if (command == "commit") {
         commit();
-    } else if (command == "push") {
-        push();
-    } else if (command == "pull") {
-        pull();
     } else {
         cout << "'" << command << "' is not a git command" << endl;
         return 1;
@@ -87,7 +83,8 @@ void commit() {
 }
 
 void push() {
-    TcpServer server(PORT, TcpMode::SERVER);
+    TcpServer server(PORT, TcpMode::CLIENT);
+    
     std::cout << "Server listening on port " << PORT << "\n";
     char buffer[BUFFER_SIZE] = {0};
     server.connect();
@@ -95,14 +92,34 @@ void push() {
 
     Message msg;
     msg.type = MessageType::CLIENT_PUSH;
-    // Message m = MessageType::CLIENT_PUSH;
-    // server.send_message(MessageType::CLIENT_PUSH);
+
 }
 
 void pull() {
-    TcpServer server(PORT, TcpMode::SERVER);
-    std::cout << "Server listening on port " << PORT << "\n";
-    char buffer[BUFFER_SIZE] = {0};
-    server.connect();
+    TcpServer client(PORT, TcpMode::CLIENT);
+    std::cout << "Server listening on port " << PORT << "\n";    
+    client.connect();
+    
+    char out_buffer[sizeof(int)] = {0};
+    char *p = out_buffer;
+    writeInt(p, static_cast<int>(MessageType::SERVER_PULL));
+    client.send_message(out_buffer);
 
+    char in_buffer[BUFFER_SIZE] = {0};
+    if (!client.receive_message(inbuf)) {
+        std::cerr << "[ERROR] no response from server\n";
+        return;
+    }
+
+    Message response = deserialize(in_buffer);
+    
+    std::ofstream out(resp.file_name, std::ios::binary);
+    if (!out) {
+        std::cerr << "[ERROR] could not open " << resp.file_name << " for writing\n";
+        return;
+    }
+    out.write(resp.data.data(), static_cast<std::streamsize>(resp.data.size()));
+    out.close();
+
+    std::cout << "Pulled " << resp.file_name << " (" << resp.data.size() << " bytes)\n";
 }
