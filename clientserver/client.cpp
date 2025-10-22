@@ -143,27 +143,48 @@ void pull() {
     std::cout << "Server listening on port " << PORT << "\n";    
     client.connect();
     
-    char out_buffer[BUFFER_SIZE] = {0};
-    char *p = out_buffer;
+    // send pull request
     Message m;
     m.type = MessageType::CLIENT_PULL;
     client.send_message(m);
 
+    // receive server response
     char in_buffer[BUFFER_SIZE] = {0};
-    if (!client.receive_message(inbuf)) {
+    if (!client.receive_message(in_buffer)) {
         std::cerr << "[ERROR] no response from server\n";
         return;
     }
 
     Message resp = deserialize(in_buffer);
 
-    ofstream out(resp.file_name, ios::binary);
-    if (!out) {
-        cerr << "[ERROR] could not open " << resp.file_name << " for writing\n";
+    if (resp.file_name.empty()) {
+        std::cerr << "[ERROR] server returned empty file name\n";
         return;
     }
-    out.write(resp.data.data(), static_cast<streamsize>(resp.data.size()));
+
+    // Ensure parent directories exist (supports nested paths in file_name)
+    std::filesystem::path out_path(resp.file_name);
+    if (!out_path.parent_path().empty()) {
+        std::error_code ec;
+        std::filesystem::create_directories(out_path.parent_path(), ec);
+        if (ec) {
+            std::cerr << "[ERROR] could not create directories for "
+                      << out_path.parent_path().string() << ": " << ec.message() << "\n";
+            return;
+        }
+    }
+
+    // Open in binary + truncate to ALWAYS overwrite if it exists
+    std::ofstream out(out_path, std::ios::binary | std::ios::out | std::ios::trunc);
+    if (!out) {
+        std::cerr << "[ERROR] could not open " << resp.file_name << " for writing\n";
+        return;
+    }
+
+    // Write bytes exactly as received
+    if (!resp.data.empty())
+        out.write(resp.data.data(), static_cast<std::streamsize>(resp.data.size()));
     out.close();
 
-    cout << "Pulled " << resp.file_name << " (" << resp.data.size() << " bytes)\n";
+    std::cout << "Pulled " << resp.file_name << " (" << resp.data.size() << " bytes)\n";
 }
