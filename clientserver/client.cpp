@@ -11,44 +11,6 @@
 using namespace std;
 using namespace std::filesystem;
 
-void init();
-void add(string name);
-void commit();
-void push();
-void pull();
-
-int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        cout << "no gitd command provided" << endl;
-        return 1;
-    }
-
-    string command = argv[1];
-
-    if (command == "init") {
-        init();
-    } else if (command == "add") {
-        if (argc < 3) {
-            cout << "usage: gitd add [path]" << endl;
-            return 1;
-        }
-
-        string file = argv[2];
-        add(file);
-    } else if (command == "commit") {
-        commit();
-    } else if (command == "push") {
-        push();
-    } else if (command == "pull") {
-        pull();
-    } else {
-        cout << "'" << command << "' is not a git command" << endl;
-        return 1;
-    }
-
-    return 0;
-}
-
 void init() {
     path folder = ".gitd";
     if (!exists(folder)) { create_directory(folder); }
@@ -106,15 +68,15 @@ void push() {
             std::cout << "Found file: " << msg.file_name << std::endl;
 
             // Open the file
-            std::ifstream file;
+            std::ifstream input_file(file.path());
 
             // Check if the file opened successfully
-            if (file.is_open()) {
-                std::string content((std::istreambuf_iterator<char>(file)),
+            if (input_file.is_open()) {
+                std::string content((std::istreambuf_iterator<char>(input_file)),
                                     std::istreambuf_iterator<char>());
                 msg.data = content;
             } else {
-                std::cerr << "Failed to open file." << std::endl;
+                std::cerr << "Failed to open file: " << file.path() << std::endl;
             }
         } catch (const filesystem_error& e) {
             cout << "error reading file " << file.path() << ": " << e.what() << endl;
@@ -190,4 +152,36 @@ void pull() {
     out.close();
 
     std::cout << "Pulled " << resp.file_name << " (" << resp.data.size() << " bytes)\n";
+}
+
+int main(int argc, char* argv[]) {
+    if (argc < 2) {
+        cout << "no gitd command provided" << endl;
+        return 1;
+    }
+
+    string command = argv[1];
+
+    if (command == "init") {
+        init();
+    } else if (command == "add") {
+        if (argc < 3) {
+            cout << "usage: gitd add [path]" << endl;
+            return 1;
+        }
+
+        string file = argv[2];
+        add(file);
+    } else if (command == "commit") {
+        commit();
+    } else if (command == "push") {
+        push();
+    } else if (command == "pull") {
+        pull();
+    } else {
+        cout << "'" << command << "' is not a git command" << endl;
+        return 1;
+    }
+
+    return 0;
 }
