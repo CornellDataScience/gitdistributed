@@ -1,5 +1,6 @@
 #include <iostream>
 #include <filesystem>
+#include <fstream>
 #include "tcp.hpp"
 #include "messages.hpp"
 
@@ -13,6 +14,8 @@ using namespace std::filesystem;
 void init();
 void add(string name);
 void commit();
+void push();
+void pull();
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -100,10 +103,10 @@ void push() {
     for (const auto& file : directory_iterator(commitspath)) {
         try {
             msg.file_name = file.path().filename().string();
-            std::cout << "Found file: " << filename << std::endl;
+            std::cout << "Found file: " << msg.file_name << std::endl;
 
             // Open the file
-            std::ifstream file(entry.path());
+            std::ifstream file;
 
             // Check if the file opened successfully
             if (file.is_open()) {
@@ -150,7 +153,7 @@ void pull() {
     client.send_message(m);
 
     char in_buffer[BUFFER_SIZE] = {0};
-    if (!client.receive_message(inbuf)) {
+    if (!client.receive_message(in_buffer)) {
         std::cerr << "[ERROR] no response from server\n";
         return;
     }
