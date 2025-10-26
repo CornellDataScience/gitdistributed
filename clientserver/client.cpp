@@ -96,6 +96,8 @@ void push() {
     if (received)
     {
         Message req = deserialize(buffer);
+        std::cout << req.data << std::endl;
+        std::cout << req.file_name << std::endl;
         if (req.type == MessageType::SERVER_PUSH) {
             cout << "push successful" << endl;
         }

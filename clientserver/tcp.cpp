@@ -99,18 +99,24 @@ void TcpServer::connect(const std::string &server_address)
     }
 }
 
+static bool send_all(int fd, const char* data, size_t len) {
+    size_t total = 0;
+    while (total < len) {
+        ssize_t n = send(fd, data + total, len - total, 0);
+        if (n <= 0) return false;
+        total += static_cast<size_t>(n);
+    }
+    return true;
+}
+
 void TcpServer::send_message(Message message, const std::string &dest_address)
 {
-    char resp_buff[BUFFER_SIZE] = {'a'};
-    // serialize(message, resp_buff);
-    std::cout << "Message: " << message.data << std::endl;
-    std::cout << "Buff: " << resp_buff << std::endl;
-    
-    int target_fd = connected_fd;
-    std::cout << "Sending message to fd " << target_fd << std::endl;
-    
-    if (send(target_fd, resp_buff, strlen(resp_buff), 0) < 0)
-    {
+    char resp_buff[BUFFER_SIZE] = {};
+    size_t nbytes = serialize(message, resp_buff);
+
+    std::cout << "Sending " << nbytes << " bytes to fd " << connected_fd << std::endl;
+
+    if (!send_all(connected_fd, resp_buff, nbytes)) {
         std::cerr << "[ERROR] Failed to send message: " << strerror(errno) << std::endl;
     }
 }

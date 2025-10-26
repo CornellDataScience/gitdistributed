@@ -17,4 +17,4 @@ struct Message
 };
 
 Message deserialize(char *buffer);
-bool serialize(const Message &msg, char *buff);
+size_t serialize(const Message &msg, char *buff);

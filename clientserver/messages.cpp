@@ -1,4 +1,5 @@
 #include "messages.hpp"
+#include <iostream>
 
 int read_int(const char *buff)
 {
@@ -55,24 +56,36 @@ void writeInt(char *&buf, int value)
   buf += sizeof(value);
 }
 
-bool serialize(const Message &msg, char *buff)
+size_t serialize(const Message &msg, char *buff)
 {
-  char *p = buff;
-  writeInt(p, static_cast<int>(msg.type));
+    char *p = buff;
 
-  switch (msg.type)
-  {
-  case MessageType::CLIENT_PUSH:
-  case MessageType::SERVER_PULL:
-    writeInt(p, static_cast<int>(msg.file_name.size()));
-    std::memcpy(p, msg.file_name.data(), msg.file_name.size());
-    p += msg.file_name.size();
-    writeInt(p, static_cast<int>(msg.data.size()));
-    std::memcpy(p, msg.data.data(), msg.data.size());
-    p += msg.data.size();
-    break;
-  default:
-    break;
-  }
-  return true;
+    auto writeInt = [&](int value) {
+        std::memcpy(p, &value, sizeof(int));
+        p += sizeof(int);
+    };
+
+    writeInt(static_cast<int>(msg.type));
+
+    switch (msg.type)
+    {
+    case MessageType::CLIENT_PUSH:
+    case MessageType::SERVER_PULL:
+    {
+        int nameSize = static_cast<int>(msg.file_name.size());
+        writeInt(nameSize);
+        std::memcpy(p, msg.file_name.data(), nameSize);
+        p += nameSize;
+
+        int dataSize = static_cast<int>(msg.data.size());
+        writeInt(dataSize);
+        std::memcpy(p, msg.data.data(), dataSize);
+        p += dataSize;
+        break;
+    }
+    default:
+        break;
+    }
+
+    return static_cast<size_t>(p - buff);
 }
