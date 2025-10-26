@@ -1,4 +1,4 @@
-#include "messages.hpp"
+#include "commands.hpp"
 
 int read_int(const char *buff)
 {
@@ -16,19 +16,19 @@ char *read_bytes(const char *buff, int n)
   return result;
 }
 
-Message deserialize(char *buffer)
+Command deserializeCommand(char *buffer)
 {
-  Message deserialized;
+  Command deserialized;
   char *p = buffer;
 
-  MessageType code = static_cast<MessageType>(read_int(p));
+  CommandType code = static_cast<CommandType>(read_int(p));
   p += sizeof(int);
   deserialized.type = code;
 
   switch (code)
   {
-  case MessageType::CLIENT_PUSH:
-  case MessageType::SERVER_PULL:
+  case CommandType::CLIENT_PUSH:
+  case CommandType::SERVER_PULL:
   {
     int file_name_size = read_int(p);
     p += sizeof(int);
@@ -55,21 +55,21 @@ void writeInt(char *&buf, int value)
   buf += sizeof(value);
 }
 
-bool serialize(const Message &msg, char *buff)
+bool serializeCommand(const Command &cmd, char *buff)
 {
   char *p = buff;
-  writeInt(p, static_cast<int>(msg.type));
+  writeInt(p, static_cast<int>(cmd.type));
 
-  switch (msg.type)
+  switch (cmd.type)
   {
-  case MessageType::CLIENT_PUSH:
-  case MessageType::SERVER_PULL:
-    writeInt(p, static_cast<int>(msg.file_name.size()));
-    std::memcpy(p, msg.file_name.data(), msg.file_name.size());
-    p += msg.file_name.size();
-    writeInt(p, static_cast<int>(msg.data.size()));
-    std::memcpy(p, msg.data.data(), msg.data.size());
-    p += msg.data.size();
+  case CommandType::CLIENT_PUSH:
+  case CommandType::SERVER_PULL:
+    writeInt(p, static_cast<int>(cmd.file_name.size()));
+    std::memcpy(p, cmd.file_name.data(), cmd.file_name.size());
+    p += cmd.file_name.size();
+    writeInt(p, static_cast<int>(cmd.data.size()));
+    std::memcpy(p, cmd.data.data(), cmd.data.size());
+    p += cmd.data.size();
     break;
   default:
     break;

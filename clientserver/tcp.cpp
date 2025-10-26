@@ -99,10 +99,10 @@ void TcpServer::connect(const std::string &server_address)
     }
 }
 
-void TcpServer::send_message(Message message, const std::string &dest_address)
+void TcpServer::send_message(Command command, const std::string &dest_address)
 {
     char resp_buff[BUFFER_SIZE] = {0};
-    serialize(message, resp_buff);
+    serializeCommand(command, resp_buff);
     
     int target_fd = connected_fd;
     

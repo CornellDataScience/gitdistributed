@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <fstream>
 #include "tcp.hpp"
-#include "messages.hpp"
+#include "commands.hpp"
 
 #define PORT 8080
 #define SERVER_IP ""
@@ -56,16 +56,16 @@ void push() {
     server.connect();
     std::cout << "Client connected to port " << PORT << "\n";
 
-    Message msg;
-    msg.type = MessageType::CLIENT_PUSH;
+    Command cmd;
+    cmd.type = CommandType::CLIENT_PUSH;
 
     const path commitspath = ".gitd/commits/";
 
     // Assuming only one file in commitsfolder
     for (const auto& file : directory_iterator(commitspath)) {
         try {
-            msg.file_name = file.path().filename().string();
-            std::cout << "Found file: " << msg.file_name << std::endl;
+            cmd.file_name = file.path().filename().string();
+            std::cout << "Found file: " << cmd.file_name << std::endl;
 
             // Open the file
             std::ifstream input_file(file.path());
@@ -74,7 +74,7 @@ void push() {
             if (input_file.is_open()) {
                 std::string content((std::istreambuf_iterator<char>(input_file)),
                                     std::istreambuf_iterator<char>());
-                msg.data = content;
+                cmd.data = content;
             } else {
                 std::cerr << "Failed to open file: " << file.path() << std::endl;
             }
@@ -86,14 +86,14 @@ void push() {
     // TODO: handle deleting from commits folder
 
     // make continuous requests
-    server.send_message(msg);
+    server.send_message(cmd);
 
     char buffer[BUFFER_SIZE] = {0};
     bool received = server.receive_message(buffer);
     if (received)
     {
-        Message req = deserialize(buffer);
-        if (req.type == MessageType::SERVER_PUSH) {
+        Command req = deserializeCommand(buffer);
+        if (req.type == CommandType::SERVER_PUSH) {
             cout << "push successful" << endl;
         }
     }
@@ -109,9 +109,9 @@ void pull() {
     client.connect();
     
     // send pull request
-    Message m;
-    m.type = MessageType::CLIENT_PULL;
-    client.send_message(m);
+    Command cmd;
+    cmd.type = CommandType::CLIENT_PULL;
+    client.send_message(cmd);
 
     // receive server response
     char in_buffer[BUFFER_SIZE] = {0};
@@ -120,7 +120,7 @@ void pull() {
         return;
     }
 
-    Message resp = deserialize(in_buffer);
+    Command resp = deserializeCommand(in_buffer);
 
     if (resp.file_name.empty()) {
         std::cerr << "[ERROR] server returned empty file name\n";

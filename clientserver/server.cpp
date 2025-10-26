@@ -1,5 +1,6 @@
 #include "git_app.hpp"
 #include "tcp.hpp"
+#include "commands.hpp"
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -19,8 +20,8 @@ int main()
         bool received = server.receive_message(buffer);
         if (received)
         {
-            Message req = deserialize(buffer);
-            Message resp = gitApp.handle_client_req(req);
+            Command req = deserializeCommand(buffer);
+            Command resp = gitApp.handle_client_req(req);
             server.send_message(resp);
         }
         else
