@@ -8,14 +8,15 @@ int main()
 {
     GitApp gitApp;
     TcpServer server(PORT, TcpMode::SERVER);
-    std::cout << "Server listening on port " << PORT << "\n";
-
-    char buffer[BUFFER_SIZE];
-
-    server.connect();
+   
 
     while (true)
     {
+         std::cout << "Server listening on port " << PORT << "\n";
+
+        char buffer[BUFFER_SIZE];
+
+        server.connect();
         std::cout << "Before receive" << std::endl;
         
         bool received = server.receive_message(buffer);
