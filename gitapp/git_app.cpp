@@ -7,6 +7,7 @@ Message GitApp::handle_push(const Message &req)
   Message msg;
   file_store[req.file_name] = std::string(req.data);
   msg.type = MessageType::SERVER_PUSH;
+  std::cout << "Handled push" << std::endl;
   return msg;
 }
 

@@ -5,7 +5,7 @@
 #include "messages.hpp"
 
 #define PORT 8080
-#define SERVER_IP ""
+#define SERVER_IP "127.0.0.1"
 #define BUFFER_SIZE 1024
 
 using namespace std;
@@ -53,7 +53,7 @@ void commit() {
 
 void push() {
     TcpServer server(PORT, TcpMode::CLIENT);
-    server.connect();
+    server.connect(SERVER_IP);
     std::cout << "Client connected to port " << PORT << "\n";
 
     Message msg;
@@ -85,14 +85,19 @@ void push() {
 
     // TODO: handle deleting from commits folder
 
+    // sleep(5);
+    std::cout << "Sending message" << std::endl;
+
     // make continuous requests
-    server.send_message(msg);
+    server.send_message(msg, SERVER_IP);
 
     char buffer[BUFFER_SIZE] = {0};
     bool received = server.receive_message(buffer);
     if (received)
     {
         Message req = deserialize(buffer);
+        std::cout << req.data << std::endl;
+        std::cout << req.file_name << std::endl;
         if (req.type == MessageType::SERVER_PUSH) {
             cout << "push successful" << endl;
         }

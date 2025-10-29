@@ -73,7 +73,7 @@ void TcpServer::connect(const std::string &server_address)
             std::cerr << "Accept failed: " << strerror(errno) << std::endl;
             return;
         }
-        std::cout << "Connection accepted\n";
+        std::cout << "Connection accepted with fd " << connected_fd << std::endl;
     }
     else
     {
@@ -95,19 +95,28 @@ void TcpServer::connect(const std::string &server_address)
         }
         
         connected_fd = socket_fd;
-        std::cout << "Connected to server\n";
+        std::cout << "Connected to server with fd " << connected_fd << std::endl;
     }
+}
+
+static bool send_all(int fd, const char* data, size_t len) {
+    size_t total = 0;
+    while (total < len) {
+        ssize_t n = send(fd, data + total, len - total, 0);
+        if (n <= 0) return false;
+        total += static_cast<size_t>(n);
+    }
+    return true;
 }
 
 void TcpServer::send_message(Message message, const std::string &dest_address)
 {
-    char resp_buff[BUFFER_SIZE] = {0};
-    serialize(message, resp_buff);
-    
-    int target_fd = connected_fd;
-    
-    if (send(target_fd, resp_buff, strlen(resp_buff), 0) < 0)
-    {
+    char resp_buff[BUFFER_SIZE] = {};
+    size_t nbytes = serialize(message, resp_buff);
+
+    std::cout << "Sending " << nbytes << " bytes to fd " << connected_fd << std::endl;
+
+    if (!send_all(connected_fd, resp_buff, nbytes)) {
         std::cerr << "[ERROR] Failed to send message: " << strerror(errno) << std::endl;
     }
 }
@@ -115,8 +124,11 @@ void TcpServer::send_message(Message message, const std::string &dest_address)
 bool TcpServer::receive_message(char *buffer, const std::string &source_address)
 {
     int target_fd = connected_fd;
+    std::cout << "Waiting for receive from fd " << target_fd << std::endl;
+    std::cout << "Socket_fd " << socket_fd << std::endl;
     
     int bytes_received = recv(target_fd, buffer, BUFFER_SIZE - 1, 0);
+    std::cout << bytes_received << std::endl;
     if (bytes_received > 0)
     {
         buffer[bytes_received] = '\0';
