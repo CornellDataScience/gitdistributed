@@ -1,0 +1,33 @@
+[type : int | data_size : int | data]
+data is dependent on subclass
+Message:
+    type (3 bits... 3rd for ping [000, 001, 010, 011, 100])
+    size
+    status
+
+    serialize
+    deserialize
+
+[type : int | data_size : int | commandType | file_name | data]
+ClientRequest -> Message:
+    Command:
+
+    serialize:
+        buffer += command.serialize()
+        buffer += do serialization
+    deserialize
+
+ClientReply -> Message:
+
+PrimaryRequest -> Message
+
+PrimaryReply
+
+SendView
+    primaryStatus
+    backupStatus
+
+Ping
+    senderId
+
+...
