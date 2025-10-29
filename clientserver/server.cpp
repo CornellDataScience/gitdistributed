@@ -1,5 +1,6 @@
 #include "git_app.hpp"
 #include "tcp.hpp"
+#include "commands.hpp"
 
 #define PORT 8080
 #define BUFFER_SIZE 1024
@@ -24,9 +25,9 @@ int main()
         if (received)
         {
             std::cout << "Received client message" << std::endl;
-            Message req = deserialize(buffer);
+            Command req = deserializeCommand(buffer);
             std::cout << "Deserialized message" << std::endl;
-            Message resp = gitApp.handle_client_req(req);
+            Command resp = gitApp.handle_client_req(req);
             std::cout << "Handled request" << std::endl;
             server.send_message(resp);
             std::cout << "Sent response to client" << std::endl;
