@@ -1,21 +1,22 @@
 #include "git_app.hpp"
+#include "commands.hpp"
 
 GitApp::GitApp() {}
 
-Message GitApp::handle_push(const Message &req)
+Command GitApp::handle_push(const Command &req)
 {
-  Message msg;
+  Command msg;
   file_store[req.file_name] = std::string(req.data);
-  msg.type = MessageType::SERVER_PUSH;
+  msg.type = CommandType::SERVER_PUSH;
   std::cout << "Handled push" << std::endl;
   return msg;
 }
 
-Message GitApp::handle_pull()
+Command GitApp::handle_pull()
 {
-  Message msg;
+  Command msg;
 
-  msg.type = MessageType::SERVER_PULL;
+  msg.type = CommandType::SERVER_PULL;
 
   if (file_store.empty())
   {
@@ -30,17 +31,17 @@ Message GitApp::handle_pull()
   return msg;
 };
 
-Message GitApp::handle_client_req(const Message &req)
+Command GitApp::handle_client_req(const Command &req)
 {
-  Message msg;
+  Command msg;
   switch (req.type)
   {
-  case MessageType::CLIENT_PUSH:
+  case CommandType::CLIENT_PUSH:
   {
     msg = handle_push(req);
     break;
   }
-  case MessageType::CLIENT_PULL:
+  case CommandType::CLIENT_PULL:
   {
     msg = handle_pull();
     break;

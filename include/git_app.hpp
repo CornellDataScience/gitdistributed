@@ -2,16 +2,16 @@
 #include <string>
 #include <iostream>
 #include <unordered_map>
-#include "messages.hpp"
+#include "commands.hpp"
 
 class GitApp
 {
 private:
   std::unordered_map<std::string, std::string> file_store;
-  Message handle_push(const Message &req);
-  Message handle_pull();
+  Command handle_push(const Command &req);
+  Command handle_pull();
 
 public:
   GitApp();
-  Message handle_client_req(const Message &req);
+  Command handle_client_req(const Command &req);
 };
