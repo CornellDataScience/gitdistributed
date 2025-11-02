@@ -8,7 +8,7 @@ Message:
     serialize
     deserialize
 
-[type : int | data_size : int | commandType | file_name | data]
+[type : int  | commandType : int | data_size : int | file_name | data]
 ClientRequest -> Message:
     Command:
 
