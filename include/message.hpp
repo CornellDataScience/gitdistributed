@@ -75,4 +75,35 @@ public:
     void deserialize(const std::vector<char>& data) override;
 };
 
+/**
+ * @class ViewReply
+ * @brief Represents a reply from the viewserver to the client with updated view.
+ */
+class ViewReply : public Message {
+public:
+    int view_num;
+    std::string primary;
+    std::string backup;
 
+    ViewReply();
+    explicit ViewReply(int view_num, std::string primary, std::string backup);
+    
+    std::vector<char> serialize() override;
+    void deserialize(const std::vector<char>& data) override;
+};
+
+/**
+ * @class Ping
+ * @brief Represents a ping message from server to viewserver.
+ */
+class Ping : public Message {
+public:
+    int view_num;
+    std::string server_id;
+    
+    Ping();
+    explicit Ping(int view_num, std::string id);
+
+    std::vector<char> serialize() override;
+    void deserialize(const std::vector<char>& data) override;
+};
