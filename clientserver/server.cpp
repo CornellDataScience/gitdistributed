@@ -13,7 +13,7 @@ int main()
 
     while (true)
     {
-         std::cout << "Server listening on port " << PORT << "\n";
+        std::cout << "Server listening on port " << PORT << "\n";
 
         char buffer[BUFFER_SIZE];
 

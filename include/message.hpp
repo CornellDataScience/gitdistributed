@@ -35,7 +35,7 @@ public:
 
     // Pure virtual functions to be implemented by subclasses
     virtual ~Message() = default;
-    virtual std::vector<char> serialize() const = 0;
+    virtual std::vector<char> serialize();
     virtual void deserialize(const std::vector<char>& data) = 0;
 
     // Helper to get message type from a raw buffer before full deserialization
@@ -53,9 +53,10 @@ public:
     std::vector<char> file_data;
 
     ClientRequest();
-    ClientRequest(CommandType cmd, std::string name, std::vector<char> data = {});
+    ClientRequest(CommandType cmd);
+    ClientRequest(CommandType cmd, std::string name, std::vector<char> data);
 
-    std::vector<char> serialize() const override;
+    std::vector<char> serialize() override;
     void deserialize(const std::vector<char>& data) override;
 };
 
@@ -70,7 +71,7 @@ public:
     ClientReply();
     explicit ClientReply(std::string message);
 
-    std::vector<char> serialize() const override;
+    std::vector<char> serialize() override;
     void deserialize(const std::vector<char>& data) override;
 };
 
