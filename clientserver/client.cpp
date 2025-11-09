@@ -3,6 +3,7 @@
 #include <fstream>
 #include "tcp.hpp"
 #include "commands.hpp"
+#include "message.hpp"
 
 #define PORT 8080
 #define SERVER_IP "127.0.0.1"
@@ -56,25 +57,27 @@ void push() {
     server.connect(SERVER_IP);
     std::cout << "Client connected to port " << PORT << "\n";
 
-    Command cmd;
-    cmd.type = CommandType::CLIENT_PUSH;
-
+    // ClientRequest(CommandType cmd, std::string name, std::vector<char> data = {});
+    ClientRequest request;
+    
     const path commitspath = ".gitd/commits/";
-
+    
     // Assuming only one file in commitsfolder
     for (const auto& file : directory_iterator(commitspath)) {
         try {
-            cmd.file_name = file.path().filename().string();
-            std::cout << "Found file: " << cmd.file_name << std::endl;
+            std::string file_name = file.path().filename().string();
+            std::cout << "Found file: " << file_name << std::endl;
 
             // Open the file
             std::ifstream input_file(file.path());
 
             // Check if the file opened successfully
             if (input_file.is_open()) {
-                std::string content((std::istreambuf_iterator<char>(input_file)),
+                std::vector<char> content((std::istreambuf_iterator<char>(input_file)),
                                     std::istreambuf_iterator<char>());
-                cmd.data = content;
+                
+                // Initialize client request fields
+                request = ClientRequest(CommandType::CLIENT_PUSH, file_name, content);
             } else {
                 std::cerr << "Failed to open file: " << file.path() << std::endl;
             }
@@ -89,7 +92,7 @@ void push() {
     std::cout << "Sending message" << std::endl;
 
     // make continuous requests
-    server.send_message(cmd, SERVER_IP);
+    server.send_message(request, SERVER_IP);
 
     char buffer[BUFFER_SIZE] = {0};
     bool received = server.receive_message(buffer);
@@ -114,10 +117,10 @@ void pull() {
     client.connect();
     
     // send pull request
-    Command cmd;
-    cmd.type = CommandType::CLIENT_PULL;
-    client.send_message(cmd);
-
+    ClientRequest request;
+    request = ClientRequest(CommandType::CLIENT_PULL);
+    client.send_message(request);
+    
     // receive server response
     char in_buffer[BUFFER_SIZE] = {0};
     if (!client.receive_message(in_buffer)) {

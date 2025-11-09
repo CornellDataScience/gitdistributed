@@ -1,5 +1,7 @@
 #include "tcp.hpp"
 #include "commands.hpp"
+#include "message.hpp"
+#pragma once
 
 #define BUFFER_SIZE 1024
 
@@ -110,14 +112,19 @@ static bool send_all(int fd, const char* data, size_t len) {
     return true;
 }
 
-void TcpServer::send_message(Command message, const std::string &dest_address)
+void TcpServer::send_message(Message& message, const std::string &dest_address)
 {
-    char resp_buff[BUFFER_SIZE] = {};
-    size_t nbytes = serializeCommand(message, resp_buff);
+    std::vector<char> resp_buff;
+    
+    if (message.type == MessageType::CLIENT_REQUEST) {
+        resp_buff = message.serialize();
+    }
 
+    int nbytes = resp_buff.size();
+    
     std::cout << "Sending " << nbytes << " bytes to fd " << connected_fd << std::endl;
 
-    if (!send_all(connected_fd, resp_buff, nbytes)) {
+    if (!send_all(connected_fd, resp_buff.data(), nbytes)) {
         std::cerr << "[ERROR] Failed to send message: " << strerror(errno) << std::endl;
     }
 }

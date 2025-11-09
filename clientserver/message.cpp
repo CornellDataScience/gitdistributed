@@ -40,6 +40,19 @@ MessageType Message::peek_type(const std::vector<char>& data) {
 ClientRequest::ClientRequest() {
     this->type = MessageType::CLIENT_REQUEST;
 }
+/**
+ClientRequest::ClientRequest(CommandType cmd, std::string name, std::vector<char> data)
+    : type(MessageType::CLIENT_REQUEST),
+      command_type(cmd),
+      file_name(std::move(name)),
+      file_data(std::move(data)) */
+ClientRequest::ClientRequest(CommandType cmd) :
+    command_type(cmd),
+    file_name(""),
+    file_data({})
+{
+    this->type = MessageType::CLIENT_REQUEST;
+}
 
 ClientRequest::ClientRequest(CommandType cmd, std::string name, std::vector<char> data) {
     this->type = MessageType::CLIENT_REQUEST;
@@ -52,7 +65,7 @@ ClientRequest::ClientRequest(CommandType cmd, std::string name, std::vector<char
 // Serializes the ClientRequest object into a byte vector.
 // Format: [type | commandType | file_name_size | file_name | file_data_size | file_data]
 //
-std::vector<char> ClientRequest::serialize() const {
+std::vector<char> ClientRequest::serialize() {
     std::vector<char> buffer;
     
     // 1. Message Type
@@ -112,7 +125,7 @@ ClientReply::ClientReply(std::string message) : reply_message(std::move(message)
  * Serializes the ClientReply object into a byte vector.
  * Format: [type | status | message_size | message]
  */
-std::vector<char> ClientReply::serialize() const {
+std::vector<char> ClientReply::serialize() {
     std::vector<char> buffer;
     
     // 1. Message Type
@@ -158,7 +171,7 @@ class BackupReply : public Message {
 
 };
 
-class SendView : public Message {
+class ViewReply : public Message {
 
 };
 

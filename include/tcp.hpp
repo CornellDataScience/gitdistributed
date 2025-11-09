@@ -28,6 +28,6 @@ public:
 
   void connect(const std::string &server_address = "");
 
-  void send_message(Command message, const std::string &dest_address = "");
+  void send_message(Message& message, const std::string &dest_address = "");
   bool receive_message(char *buffer, const std::string &source_address = "");
 };
