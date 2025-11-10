@@ -1,5 +1,6 @@
 #include "git_app.hpp"
 #include "commands.hpp"
+#include "message.hpp"
 
 GitApp::GitApp() {}
 
