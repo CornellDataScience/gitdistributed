@@ -25,27 +25,34 @@ void append_to_buffer(std::vector<char>& buffer, const std::string& str) {
     buffer.insert(buffer.end(), str.begin(), str.end());
 }
 
-// --- Message ---
-MessageType Message::peek_type(const std::vector<char>& data) {
-    if (data.size() < sizeof(MessageType)) {
+// Message 
+MessageType Message::peek_type(const char* data) {
+    if (strlen(data) < sizeof(MessageType)) {
         throw std::runtime_error("Buffer too small to peek message type");
     }
     MessageType type;
-    std::memcpy(&type, data.data(), sizeof(MessageType));
+    std::memcpy(&type, data, sizeof(MessageType));
     return type;
 }
 
+Message Message::deserialize(const char* data) {
+    MessageType message_type = Message::peek_type(data);
+    Message* msg;
+    
+    if (message_type == MessageType::CLIENT_REQUEST) {
+        msg = new ClientRequest();
+        ClientRequest::deserialize(data, *msg);
+    } else if (message_type == MessageType::CLIENT_REPLY) {
+        msg = new ClientReply();ClientRequest request = ClientRequest
+    }
+    
+    return &msg;}
 
-// --- ClientRequest ---
+// ClientRequest
 ClientRequest::ClientRequest() {
     this->type = MessageType::CLIENT_REQUEST;
 }
-/**
-ClientRequest::ClientRequest(CommandType cmd, std::string name, std::vector<char> data)
-    : type(MessageType::CLIENT_REQUEST),
-      command_type(cmd),
-      file_name(std::move(name)),
-      file_data(std::move(data)) */
+
 ClientRequest::ClientRequest(CommandType cmd) :
     command_type(cmd),
     file_name(""),
@@ -88,28 +95,17 @@ std::vector<char> ClientRequest::serialize() {
 /**
  * Deserializes a byte vector into the ClientRequest object.
  */
-void ClientRequest::deserialize(const std::vector<char>& data) {
+void ClientRequest::deserialize(char* data, ClientRequest &request) {
     size_t offset = 0;
 
     // 1. Message Type (already known, but we skip it)
     offset += sizeof(MessageType);
 
-    // 2. Command Type
-    std::memcpy(&this->command_type, data.data() + offset, sizeof(CommandType));
-    offset += sizeof(CommandType);
+    Command command = deserializeCommand(data + offset);
 
-    // 3. File Name
-    size_t file_name_len;
-    std::memcpy(&file_name_len, data.data() + offset, sizeof(size_t));
-    offset += sizeof(size_t);
-    this->file_name.assign(data.data() + offset, file_name_len);
-    offset += file_name_len;
-
-    // 4. File Data
-    size_t file_data_len;
-    std::memcpy(&file_data_len, data.data() + offset, sizeof(size_t));
-    offset += sizeof(size_t);
-    this->file_data.assign(data.data() + offset, data.data() + offset + file_data_len);
+    request.command_type = command.type;
+    request.file_name = command.file_name;
+    request.file_data = command.data;
 }
 
 // ClientReply
@@ -117,7 +113,9 @@ ClientReply::ClientReply() {
     this->type = MessageType::CLIENT_REPLY;
 }
 
-ClientReply::ClientReply(std::string message) : reply_message(std::move(message)) {
+ClientReply::ClientReply(Command cmd) :
+    command(cmd)
+{
     this->type = MessageType::CLIENT_REPLY;
 }
 
@@ -127,15 +125,12 @@ ClientReply::ClientReply(std::string message) : reply_message(std::move(message)
  */
 std::vector<char> ClientReply::serialize() {
     std::vector<char> buffer;
-    
+
     // 1. Message Type
     append_to_buffer(buffer, this->type);
     
-    // 2. Status
-    append_to_buffer(buffer, this->status);
-
-    // 3. Reply Message
-    append_to_buffer(buffer, this->reply_message);
+    // 2. Command Type
+    append_to_buffer(buffer, this->command);
 
     return buffer;
 }
@@ -143,21 +138,15 @@ std::vector<char> ClientReply::serialize() {
 /**
  * Deserializes a byte vector into the ClientReply object.
  */
-void ClientReply::deserialize(const std::vector<char>& data) {
+void ClientReply::deserialize(char* data, ClientReply &reply) {
     size_t offset = 0;
 
     // 1. Message Type (skip)
-    offset += sizeof(MessageType);
+    offset += sizeof(CommandType);
 
-    // 2. Status
-    std::memcpy(&this->status, data.data() + offset, sizeof(int));
-    offset += sizeof(int);
+    Command command = deserializeCommand(data + offset);
 
-    // 3. Reply Message
-    size_t msg_len;
-    std::memcpy(&msg_len, data.data() + offset, sizeof(size_t));
-    offset += sizeof(size_t);
-    this->reply_message.assign(data.data() + offset, msg_len);
+    reply.command = command;
 }
 
 

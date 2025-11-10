@@ -112,13 +112,9 @@ static bool send_all(int fd, const char* data, size_t len) {
     return true;
 }
 
-void TcpServer::send_message(Message& message, const std::string &dest_address)
+void TcpServer::send_message(Message &message, const std::string &dest_address)
 {
-    std::vector<char> resp_buff;
-    
-    if (message.type == MessageType::CLIENT_REQUEST) {
-        resp_buff = message.serialize();
-    }
+    std::vector<char> resp_buff = message.serialize();
 
     int nbytes = resp_buff.size();
     

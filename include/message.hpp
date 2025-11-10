@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include "commands.hpp"
 
 // Enum for message types
 enum class MessageType : int {
@@ -36,10 +37,10 @@ public:
     // Pure virtual functions to be implemented by subclasses
     virtual ~Message() = default;
     virtual std::vector<char> serialize();
-    virtual void deserialize(const std::vector<char>& data) = 0;
 
     // Helper to get message type from a raw buffer before full deserialization
-    static MessageType peek_type(const std::vector<char>& data);
+    static MessageType peek_type(const char* data);
+    static Message deserialize(const char* data);
 };
 
 /**
@@ -50,14 +51,14 @@ class ClientRequest : public Message {
 public:
     CommandType command_type;
     std::string file_name;
-    std::vector<char> file_data;
+    std::string file_data;
 
     ClientRequest();
     ClientRequest(CommandType cmd);
     ClientRequest(CommandType cmd, std::string name, std::vector<char> data);
 
     std::vector<char> serialize() override;
-    void deserialize(const std::vector<char>& data) override;
+    static void deserialize(char* data, ClientRequest &request);
 };
 
 /**
@@ -66,13 +67,11 @@ public:
  */
 class ClientReply : public Message {
 public:
-    std::string reply_message;
+    Command command;
 
     ClientReply();
-    explicit ClientReply(std::string message);
+    ClientReply(Command cmd);
 
     std::vector<char> serialize() override;
-    void deserialize(const std::vector<char>& data) override;
+    static void deserialize(char* data, ClientReply &reply);
 };
-
-
