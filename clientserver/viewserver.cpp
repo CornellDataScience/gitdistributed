@@ -58,19 +58,45 @@ void ViewServer::onPingCheckTimer() {
     }
     if (primaryAcked) {
       std::vector<std::string> idleServers;
+      
       for (auto const& pair : serverToLastPinged) {
           if (pair.first != current_view.primary && pair.first != current_view.backup && pair.second < 2) {
               idleServers.push_back(pair.first);
           }
       }
       bool viewChanged = false;
+      std::string primary = current_view.primary;
+      std::string backup = current_view.backup;
       
+      // checking if the primary is not unassigned, and if >= 2 (has died)
+      if (primary != "" && ((serverToLastPinged.count(primary) == 0 || serverToLastPinged[primary] >= 2))) {
+          primary = backup;
+          backup = "";
+          viewChanged = true;
+      }
+
+      // checking analogously for backup...
+      if (backup != "" && ((serverToLastPinged.count(backup) == 0) || serverToLastPinged[backup] >= 2)) {
+        backup = "";
+        viewChanged = true;
+      }
+    
+      // promote idle server to replace backup
+      if (backup == "" && !idleServers.empty()) {
+          backup = idleServers[0];
+          viewChanged = true;
+      }
+      // if the view change 
+      if (viewChanged) {
+          current_view = View{current_view.view_num + 1, primary, backup};
+          primaryAcked = false;
+      }
     }
 }
 
 int main() {
     TcpServer server(PORT, TcpMode::SERVER);
-    ViewServer viewserver();
+    ViewServer viewserver;
     while (true)
     {
         std::cout << "View Server listening on port " << PORT << "\n";
@@ -86,7 +112,7 @@ int main() {
             std::cout << "Received client message" << std::endl;
             Command req = deserializeCommand(buffer);
             std::cout << "Deserialized message" << std::endl;
-            Command resp = gitApp.handle_client_req(req);
+            Command resp = viewserver.handlePing(req);
             std::cout << "Handled request" << std::endl;
             server.send_message(resp);
             std::cout << "Sent response to client" << std::endl;
