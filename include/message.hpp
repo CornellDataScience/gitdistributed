@@ -14,14 +14,14 @@ enum class MessageType : int {
     PING = 4
 };
 
-// Enum for command types within a ClientRequest
-enum class CommandType : int {
-    INIT = 0,
-    ADD = 1,
-    COMMIT = 2,
-    PUSH = 3,
-    PULL = 4
-};
+// // Enum for command types within a ClientRequest
+// enum class CommandType : int {
+//     INIT = 0,
+//     ADD = 1,
+//     COMMIT = 2,
+//     PUSH = 3,
+//     PULL = 4
+// };
 
 /**
  * @class Message
@@ -35,12 +35,13 @@ public:
     int status = 0; // status field
 
     // Pure virtual functions to be implemented by subclasses
-    virtual ~Message() = default;
-    virtual std::vector<char> serialize();
+    Message() = default;
+    ~Message() = default;
 
     // Helper to get message type from a raw buffer before full deserialization
     static MessageType peek_type(const char* data);
     static Message deserialize(const char* data);
+    static std::vector<char> serialize(Message &message);
 };
 
 /**
@@ -55,9 +56,9 @@ public:
 
     ClientRequest();
     ClientRequest(CommandType cmd);
-    ClientRequest(CommandType cmd, std::string name, std::vector<char> data);
+    ClientRequest(CommandType cmd, std::string name, std::string data);
 
-    std::vector<char> serialize() override;
+    static std::vector<char> serialize(ClientRequest *request);
     static void deserialize(char* data, ClientRequest &request);
 };
 
@@ -72,6 +73,6 @@ public:
     ClientReply();
     ClientReply(Command cmd);
 
-    std::vector<char> serialize() override;
+    static std::vector<char> serialize(ClientReply *reply);
     static void deserialize(char* data, ClientReply &reply);
 };

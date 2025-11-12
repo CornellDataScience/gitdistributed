@@ -14,7 +14,7 @@ int main() {
     while (true) {
         std::cout << "Server listening on port " << PORT << "\n";
 
-        std::vector<char> buffer = std::vector<char>();
+        std::vector<char> buffer = std::vector<char>(BUFFER_SIZE);
 
         server.connect();
         std::cout << "Before receive" << std::endl;
@@ -24,7 +24,6 @@ int main() {
         if (received) {
             ClientRequest request = ClientRequest();
             std::cout << "Received client message" << std::endl;
-            // Command req = deserializeCommand(buffer);
             ClientRequest::deserialize(buffer.data(), request);
             std::cout << "Deserialized message" << std::endl;
             Command resp = gitApp.handle_client_req(Command{request.command_type, request.file_name, request.file_data.data()});

@@ -1,6 +1,7 @@
 #include "message.hpp"
 #include <cstring>
 #include <stdexcept>
+#include <iostream>
 
 // Appends any serializable data to a vector of chars
 template<typename T>
@@ -35,18 +36,31 @@ MessageType Message::peek_type(const char* data) {
     return type;
 }
 
-Message Message::deserialize(const char* data) {
-    MessageType message_type = Message::peek_type(data);
-    Message* msg;
-    
+std::vector<char> Message::serialize(Message &message) {
+    MessageType message_type = message.type;
+    std::vector<char> serialized;
     if (message_type == MessageType::CLIENT_REQUEST) {
-        msg = new ClientRequest();
-        ClientRequest::deserialize(data, *msg);
-    } else if (message_type == MessageType::CLIENT_REPLY) {
-        msg = new ClientReply();ClientRequest request = ClientRequest
+        serialized = ClientRequest::serialize((ClientRequest *) &message);
     }
+    else if(message_type == MessageType::CLIENT_REPLY){
+        serialized = ClientReply::serialize((ClientReply *) &message);
+    }
+
+    return serialized;
+}
+
+// Message Message::deserialize(const char* data) {
+//     MessageType message_type = Message::peek_type(data);
+//     Message* msg;
     
-    return &msg;}
+//     if (message_type == MessageType::CLIENT_REQUEST) {
+//         msg = new ClientRequest();
+//         ClientRequest::deserialize(data, *msg);
+//     } else if (message_type == MessageType::CLIENT_REPLY) {
+//         msg = new ClientReply();ClientRequest request = ClientRequest
+//     }
+    
+//     return &msg;}
 
 // ClientRequest
 ClientRequest::ClientRequest() {
@@ -61,7 +75,7 @@ ClientRequest::ClientRequest(CommandType cmd) :
     this->type = MessageType::CLIENT_REQUEST;
 }
 
-ClientRequest::ClientRequest(CommandType cmd, std::string name, std::vector<char> data) {
+ClientRequest::ClientRequest(CommandType cmd, std::string name, std::string data) {
     this->type = MessageType::CLIENT_REQUEST;
     this->command_type = cmd;
     this->file_name = std::move(name);
@@ -72,22 +86,20 @@ ClientRequest::ClientRequest(CommandType cmd, std::string name, std::vector<char
 // Serializes the ClientRequest object into a byte vector.
 // Format: [type | commandType | file_name_size | file_name | file_data_size | file_data]
 //
-std::vector<char> ClientRequest::serialize() {
+std::vector<char> ClientRequest::serialize(ClientRequest *request) {
     std::vector<char> buffer;
     
     // 1. Message Type
-    append_to_buffer(buffer, this->type);
+    append_to_buffer(buffer, request->type);
     
     // 2. Command Type
-    append_to_buffer(buffer, this->command_type);
+    append_to_buffer(buffer, request->command_type);
 
     // 3. File Name (the helper function adds the size first, then the data)
-    append_to_buffer(buffer, this->file_name);
+    append_to_buffer(buffer, request->file_name);
 
     // 4. File Data (add the size first, then the data)
-    size_t file_data_len = this->file_data.size();
-    append_to_buffer(buffer, file_data_len);
-    buffer.insert(buffer.end(), this->file_data.begin(), this->file_data.end());
+    append_to_buffer(buffer, request->file_data);
 
     return buffer;
 }
@@ -101,11 +113,17 @@ void ClientRequest::deserialize(char* data, ClientRequest &request) {
     // 1. Message Type (already known, but we skip it)
     offset += sizeof(MessageType);
 
+    std::cout << "deserializing command" << std::endl;
+
     Command command = deserializeCommand(data + offset);
+
+    std::cout << "deserialized command" << std::endl;
 
     request.command_type = command.type;
     request.file_name = command.file_name;
     request.file_data = command.data;
+
+    std::cout << "finished deserialize" << std::endl;
 }
 
 // ClientReply
@@ -123,14 +141,14 @@ ClientReply::ClientReply(Command cmd) :
  * Serializes the ClientReply object into a byte vector.
  * Format: [type | status | message_size | message]
  */
-std::vector<char> ClientReply::serialize() {
+std::vector<char> ClientReply::serialize(ClientReply *reply) {
     std::vector<char> buffer;
 
     // 1. Message Type
-    append_to_buffer(buffer, this->type);
+    append_to_buffer(buffer, reply->type);
     
     // 2. Command Type
-    append_to_buffer(buffer, this->command);
+    append_to_buffer(buffer, reply->command);
 
     return buffer;
 }
