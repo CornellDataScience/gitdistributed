@@ -9,8 +9,8 @@
 enum class MessageType : int {
     CLIENT_REQUEST = 0,
     CLIENT_REPLY = 1,
-    PRIMARY_REQUEST = 2,
-    PRIMARY_REPLY = 3,
+    FORWARDED_REQUEST = 2,
+    BACKUP_REPLY = 3,
     PING = 4
 };
 
@@ -75,4 +75,33 @@ public:
 
     static std::vector<char> serialize(ClientReply *reply);
     static void deserialize(char* data, ClientReply &reply);
+};
+
+
+class ForwardedRequest : public Message {
+public:
+    ClientRequest client_request;
+    std::string sender_address;
+        
+    ForwardedRequest(ClientRequest request, std::string sender_address);
+    static std::vector<char> serialize(ForwardedRequest *request);
+    static void deserialize(char* data, ForwardedRequest &request);
+};
+
+// Backup's acknowledge of request
+class BackupReply : public Message {
+    ForwardedRequest forwarded_request;
+    std::string sender_address;
+        
+    BackupReply(ForwardedRequest request, std::string sender_address);
+    static std::vector<char> serialize(BackupReply *reply);
+    static void deserialize(char* data, BackupReply& reply);
+};
+
+class ViewReply : public Message {
+
+};
+
+class Ping : public Message {
+
 };
