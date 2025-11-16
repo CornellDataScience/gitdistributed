@@ -140,7 +140,6 @@ std::vector<char> ClientReply::serialize(ClientReply *reply) {
 
     // 1. Serialize message type
     append_to_buffer(buffer, reply->type);
-    std::cout << buffer.size() << std::endl;
     
     // 2. Serialize command
     // Allocate intermediate buff to serialize command into
@@ -149,16 +148,7 @@ std::vector<char> ClientReply::serialize(ClientReply *reply) {
 
     // Create string to use append_to_buff
     std::string command_str(command_buff.data(), serialized_size);
-
-    std::cout << serialized_size << std::endl;
-    std::cout << command_str << std::endl;
-
-    std::cout << buffer.size() << std::endl;
     append_to_buffer(buffer, command_str);
-
-    std::cout << command_str.size() << std::endl;
-
-    std::cout << buffer.size() << std::endl;
 
     return buffer;
 }
@@ -175,12 +165,8 @@ void ClientReply::deserialize(char* data, ClientReply &reply) {
     // 2. Skip serialized command string length
     offset += sizeof(int);
 
-    std::cout << offset << std::endl;
-
+    // 3. Deserialize command
     Command command = deserializeCommand(data + offset);
-
-    std::cout << command.file_name << std::endl;
-    std::cout << command.data << std::endl;
 
     reply.command = command;
 }

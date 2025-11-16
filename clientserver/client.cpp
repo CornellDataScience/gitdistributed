@@ -102,8 +102,8 @@ void push() {
 
         ClientReply::deserialize(buffer.data(), req);
         
-        std::cout << req.command.data << std::endl;
-        std::cout << req.command.file_name << std::endl;
+        // std::cout << req.command.data << std::endl;
+        // std::cout << req.command.file_name << std::endl;
         if (req.command.type == CommandType::SERVER_PUSH) {
             cout << "push successful" << endl;
         }
