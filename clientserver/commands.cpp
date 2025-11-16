@@ -24,10 +24,10 @@ Command deserializeCommand(char *buffer)
   p += sizeof(int);
   deserialized.type = code;
 
-
   switch (code)
   {
   case CommandType::CLIENT_PUSH:
+  case CommandType::SERVER_PUSH:
   case CommandType::SERVER_PULL:
   {
     int file_name_size = read_int(p);
