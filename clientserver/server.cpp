@@ -28,6 +28,8 @@ int main() {
             Command resp = gitApp.handle_client_req(Command{request.command_type, request.file_name, request.file_data.data()});
             std::cout << "Handled request" << std::endl;
             ClientReply reply = ClientReply(resp);
+            // std::cout << reply.command.file_name << std::endl;
+            // std::cout << reply.command.data << std::endl;
             server.send_message(reply);
             std::cout << "Sent response to client" << std::endl;
         } else {

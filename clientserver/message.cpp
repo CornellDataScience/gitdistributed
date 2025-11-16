@@ -138,11 +138,22 @@ ClientReply::ClientReply(Command cmd) :
 std::vector<char> ClientReply::serialize(ClientReply *reply) {
     std::vector<char> buffer;
 
-    // 1. Message Type
+    // 1. Serialize message type
     append_to_buffer(buffer, reply->type);
     
-    // 2. Command Type
-    append_to_buffer(buffer, reply->command);
+    // 2. Serialize command
+    // Allocate intermediate buff to serialize command into
+    std::vector<char> command_buff = std::vector<char>(1024);
+    int serialized_size = serializeCommand(reply->command, command_buff.data());
+
+    // Create string to use append_to_buff
+    std::string command_str(command_buff.data(), serialized_size);
+
+    std::cout << serialized_size << std::endl;
+    std::cout << command_str << std::endl;
+    append_to_buffer(buffer, command_str);
+
+    std::cout << buffer.size() << std::endl;
 
     return buffer;
 }
