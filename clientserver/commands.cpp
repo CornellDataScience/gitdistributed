@@ -72,6 +72,7 @@ size_t serializeCommand(const Command &msg, char *buff)
   switch (msg.type)
   {
     case CommandType::CLIENT_PUSH:
+    case CommandType::SERVER_PUSH:
     case CommandType::SERVER_PULL:
     {
       int nameSize = static_cast<int>(msg.file_name.size());
@@ -88,6 +89,7 @@ size_t serializeCommand(const Command &msg, char *buff)
     default:
       break;
   }
-  // std::cout << "Size of buffer: " + static_cast<size_t>(p - buff) << std::endl;
+  std::cout << "Size of buffer: ";
+  std::cout << static_cast<size_t>(p - buff) << std::endl;
   return static_cast<size_t>(p - buff);
 }
