@@ -6,14 +6,14 @@ GitApp::GitApp() {}
 
 Command GitApp::handle_push(const Command &req)
 {
-  Command msg;
+  Command cmd;
   file_store[req.file_name] = std::string(req.data);
-  msg.type = CommandType::SERVER_PUSH;
-  msg.file_name = std::string(req.file_name);
-  msg.data = std::string(req.data);
+  cmd.type = CommandType::SERVER_PUSH;
+  cmd.file_name = std::string(req.file_name);
+  cmd.data = std::string(req.data);
 
   std::cout << "Handled push" << std::endl;
-  return msg;
+  return cmd;
 }
 
 Command GitApp::handle_pull()
