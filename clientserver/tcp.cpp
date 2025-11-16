@@ -1,7 +1,6 @@
 #include "tcp.hpp"
 #include "commands.hpp"
 #include "message.hpp"
-#pragma once
 
 #define BUFFER_SIZE 1024
 
@@ -112,21 +111,17 @@ static bool send_all(int fd, const char* data, size_t len) {
     return true;
 }
 
-void TcpServer::send_message(Message& message, const std::string &dest_address)
+void TcpServer::send_message(Message &message, const std::string &dest_address)
 {
-    std::vector<char> resp_buff;
-    
-    if (message.type == MessageType::CLIENT_REQUEST) {
-        resp_buff = message.serialize();
-    }
+    std::vector<char> resp_buff = Message::serialize(message);
 
     int nbytes = resp_buff.size();
-    
-    std::cout << "Sending " << nbytes << " bytes to fd " << connected_fd << std::endl;
 
     if (!send_all(connected_fd, resp_buff.data(), nbytes)) {
         std::cerr << "[ERROR] Failed to send message: " << strerror(errno) << std::endl;
     }
+
+    std::cout << "Sending " << nbytes << " bytes to fd " << connected_fd << std::endl;
 }
 
 bool TcpServer::receive_message(char *buffer, const std::string &source_address)
@@ -141,8 +136,11 @@ bool TcpServer::receive_message(char *buffer, const std::string &source_address)
     {
         buffer[bytes_received] = '\0';
         return true;
+    } else {
+        std::cout << "errno = " << strerror(errno) << std::endl;
+        
+        return false;
     }
-    return false;
 }
 
 TcpServer::~TcpServer()

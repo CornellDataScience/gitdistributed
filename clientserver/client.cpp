@@ -94,14 +94,17 @@ void push() {
     // make continuous requests
     server.send_message(request, SERVER_IP);
 
-    char buffer[BUFFER_SIZE] = {0};
-    bool received = server.receive_message(buffer);
+    std::vector<char> buffer = std::vector<char>(1024);
+    bool received = server.receive_message(buffer.data());
     if (received)
     {
-        Command req = deserializeCommand(buffer);
-        std::cout << req.data << std::endl;
-        std::cout << req.file_name << std::endl;
-        if (req.type == CommandType::SERVER_PUSH) {
+        ClientReply req;
+
+        ClientReply::deserialize(buffer.data(), req);
+        
+        // std::cout << req.command.data << std::endl;
+        // std::cout << req.command.file_name << std::endl;
+        if (req.command.type == CommandType::SERVER_PUSH) {
             cout << "push successful" << endl;
         }
     }
@@ -122,13 +125,13 @@ void pull() {
     client.send_message(request);
     
     // receive server response
-    char in_buffer[BUFFER_SIZE] = {0};
-    if (!client.receive_message(in_buffer)) {
+    std::vector<char> in_buffer = std::vector<char>(1024);
+    if (!client.receive_message(in_buffer.data())) {
         std::cerr << "[ERROR] no response from server\n";
         return;
     }
 
-    Command resp = deserializeCommand(in_buffer);
+    Command resp = deserializeCommand(in_buffer.data());
 
     if (resp.file_name.empty()) {
         std::cerr << "[ERROR] server returned empty file name\n";

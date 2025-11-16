@@ -1,5 +1,5 @@
-CLIENT_SRCS = clientserver/client.cpp clientserver/commands.cpp clientserver/tcp.cpp
-SERVER_SRCS = clientserver/server.cpp clientserver/commands.cpp clientserver/tcp.cpp gitapp/git_app.cpp
+CLIENT_SRCS = clientserver/client.cpp clientserver/commands.cpp clientserver/tcp.cpp clientserver/message.cpp
+SERVER_SRCS = clientserver/server.cpp clientserver/commands.cpp clientserver/tcp.cpp gitapp/git_app.cpp clientserver/message.cpp
 
 all: client server
 

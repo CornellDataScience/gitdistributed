@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include "commands.hpp"
 
 // Enum for message types
 enum class MessageType : int {
@@ -13,14 +14,14 @@ enum class MessageType : int {
     PING = 4
 };
 
-// Enum for command types within a ClientRequest
-enum class CommandType : int {
-    INIT = 0,
-    ADD = 1,
-    COMMIT = 2,
-    PUSH = 3,
-    PULL = 4
-};
+// // Enum for command types within a ClientRequest
+// enum class CommandType : int {
+//     INIT = 0,
+//     ADD = 1,
+//     COMMIT = 2,
+//     PUSH = 3,
+//     PULL = 4
+// };
 
 /**
  * @class Message
@@ -34,12 +35,13 @@ public:
     int status = 0; // status field
 
     // Pure virtual functions to be implemented by subclasses
-    virtual ~Message() = default;
-    virtual std::vector<char> serialize();
-    virtual void deserialize(const std::vector<char>& data) = 0;
+    Message() = default;
+    ~Message() = default;
 
     // Helper to get message type from a raw buffer before full deserialization
-    static MessageType peek_type(const std::vector<char>& data);
+    static MessageType peek_type(const char* data);
+    static Message deserialize(const char* data);
+    static std::vector<char> serialize(Message &message);
 };
 
 /**
@@ -50,14 +52,14 @@ class ClientRequest : public Message {
 public:
     CommandType command_type;
     std::string file_name;
-    std::vector<char> file_data;
+    std::string file_data;
 
     ClientRequest();
     ClientRequest(CommandType cmd);
-    ClientRequest(CommandType cmd, std::string name, std::vector<char> data);
+    ClientRequest(CommandType cmd, std::string name, std::string data);
 
-    std::vector<char> serialize() override;
-    void deserialize(const std::vector<char>& data) override;
+    static std::vector<char> serialize(ClientRequest *request);
+    static void deserialize(char* data, ClientRequest &request);
 };
 
 /**
@@ -66,13 +68,13 @@ public:
  */
 class ClientReply : public Message {
 public:
-    std::string reply_message;
+    Command command;
 
     ClientReply();
-    explicit ClientReply(std::string message);
+    ClientReply(Command cmd);
 
-    std::vector<char> serialize() override;
-    void deserialize(const std::vector<char>& data) override;
+    static std::vector<char> serialize(ClientReply *reply);
+    static void deserialize(char* data, ClientReply &reply);
 };
 
 /**

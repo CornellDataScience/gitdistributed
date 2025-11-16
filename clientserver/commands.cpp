@@ -5,7 +5,6 @@ int read_int(const char *buff)
 {
   int value;
   memcpy(&value, buff, sizeof(int));
-  buff += sizeof(int);
   return value;
 }
 
@@ -13,7 +12,6 @@ char *read_bytes(const char *buff, int n)
 {
   char *result = (char *)malloc(n);
   memcpy(result, buff, n);
-  buff += n;
   return result;
 }
 
@@ -29,17 +27,21 @@ Command deserializeCommand(char *buffer)
   switch (code)
   {
   case CommandType::CLIENT_PUSH:
+  case CommandType::SERVER_PUSH:
   case CommandType::SERVER_PULL:
   {
     int file_name_size = read_int(p);
     p += sizeof(int);
+
     char *file_name = read_bytes(p, file_name_size);
     p += file_name_size;
+    deserialized.file_name = std::string(file_name, file_name_size);
+
     int file_size = read_int(p);
     p += sizeof(int);
     char *file_contents = read_bytes(p, file_size);
-    deserialized.file_name = std::string(file_name, file_name_size);
     deserialized.data = std::string(file_contents, file_size);
+
     free(file_name);
     free(file_contents);
     break;
@@ -70,6 +72,7 @@ size_t serializeCommand(const Command &msg, char *buff)
   switch (msg.type)
   {
     case CommandType::CLIENT_PUSH:
+    case CommandType::SERVER_PUSH:
     case CommandType::SERVER_PULL:
     {
       int nameSize = static_cast<int>(msg.file_name.size());
@@ -86,6 +89,7 @@ size_t serializeCommand(const Command &msg, char *buff)
     default:
       break;
   }
-  // std::cout << "Size of buffer: " + static_cast<size_t>(p - buff) << std::endl;
+  // std::cout << "Size of buffer: ";
+  // std::cout << static_cast<size_t>(p - buff) << std::endl;
   return static_cast<size_t>(p - buff);
 }
