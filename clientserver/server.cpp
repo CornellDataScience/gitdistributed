@@ -17,7 +17,6 @@ int main() {
         std::vector<char> buffer = std::vector<char>(BUFFER_SIZE);
 
         server.connect();
-        std::cout << "Before receive" << std::endl;
         
         bool received = server.receive_message(buffer.data());
         std::cout << received << std::endl;
