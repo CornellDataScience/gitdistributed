@@ -8,6 +8,7 @@ template<typename T>
 void append_to_buffer(std::vector<char>& buffer, const T& value) {
     const char* value_ptr = reinterpret_cast<const char*>(&value);
     buffer.insert(buffer.end(), value_ptr, value_ptr + sizeof(T));
+    std::cout << "size of T: " << sizeof(T) << std::endl;
 }
 
 /**
@@ -21,7 +22,7 @@ void append_to_buffer(std::vector<char>& buffer, const T& value) {
  * @param str The string to append.
  */
 void append_to_buffer(std::vector<char>& buffer, const std::string& str) {
-    size_t str_len = str.length();
+    int str_len = str.length();
     append_to_buffer(buffer, str_len);
     buffer.insert(buffer.end(), str.begin(), str.end());
 }
@@ -100,6 +101,11 @@ std::vector<char> ClientRequest::serialize(ClientRequest *request) {
 
     // 4. File Data (add the size first, then the data)
     append_to_buffer(buffer, request->file_data);
+
+    for (int i = 0; i < buffer.size(); i++) {
+        std::cout << buffer[i];
+    }
+    std::cout << std::endl;
 
     return buffer;
 }
