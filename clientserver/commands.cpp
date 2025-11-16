@@ -89,7 +89,7 @@ size_t serializeCommand(const Command &msg, char *buff)
     default:
       break;
   }
-  std::cout << "Size of buffer: ";
-  std::cout << static_cast<size_t>(p - buff) << std::endl;
+  // std::cout << "Size of buffer: ";
+  // std::cout << static_cast<size_t>(p - buff) << std::endl;
   return static_cast<size_t>(p - buff);
 }
