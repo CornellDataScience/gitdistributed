@@ -16,15 +16,21 @@ struct View
 
 class ViewServer
 {
-    std::unordered_map<std::string, int> serverToLastPinged;
-    View current_view;
-    bool primaryAcked;
+    public:
+        ViewServer();
+        ~ViewServer();
+        ViewReply handlePing(const std::string server_id, int server_view_num);
     
-    ViewReply handlePing(const std::string server_id, int server_view_num);
-    void onPingCheckTimer();
-    void send(const std::string server_id, const View view);
+    private:
+        std::unordered_map<std::string, int> serverToLastPinged;
+        View current_view;
+        bool primaryAcked;
+        
+        
+        void onPingCheckTimer();
+        void send(const std::string server_id, const View view);
 
-    std::thread pingCheckTimerThread;
-    std::atomic<bool> running{false};
-    std::mutex mtx;
+        std::thread pingCheckTimerThread;
+        std::atomic<bool> running{false};
+        std::mutex mtx;
 };

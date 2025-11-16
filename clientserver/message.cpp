@@ -45,6 +45,12 @@ std::vector<char> Message::serialize(Message &message) {
     else if(message_type == MessageType::CLIENT_REPLY){
         serialized = ClientReply::serialize((ClientReply *) &message);
     }
+    else if(message_type == MessageType::PING){
+        serialized = Ping::serialize((Ping *) &message);
+    }
+    else if(message_type == MessageType::VIEW_REPLY){
+        serialized = ViewReply::serialize((ViewReply *) &message);
+    }
 
     return serialized;
 }
@@ -194,46 +200,49 @@ ViewReply::ViewReply(int view_num, std::string primary, std::string backup)
     this->type = MessageType::PRIMARY_REPLY;
 }
 
-std::vector<char> ViewReply::serialize() {
+std::vector<char> serialize(ViewReply* reply) {
     std::vector<char> buffer;
 
     // 1. Message Type
-    append_to_buffer(buffer, this->type);
+    append_to_buffer(buffer, reply->type);
 
     // 2. View Number
-    append_to_buffer(buffer, this->view_num);
+    append_to_buffer(buffer, reply->view_num);
 
     // 3. Primary Server ID
-    append_to_buffer(buffer, this->primary);
+    append_to_buffer(buffer, reply->primary);
 
     // 4. Backup Server ID
-    append_to_buffer(buffer, this->backup);
+    append_to_buffer(buffer, reply->backup);
 
     return buffer;
 }
 
-void ViewReply::deserialize(const std::vector<char>& data) {
+void deserialize(char* data, ViewReply &reply) {
     size_t offset = 0;
 
     // 1. Message Type (skip)
     offset += sizeof(MessageType);
 
     // 2. View Number
-    std::memcpy(&this->view_num, data.data() + offset, sizeof(int));
+    std::memcpy(&reply.view_num, data + offset, sizeof(int));
     offset += sizeof(int);
 
     // 3. Primary Server ID
     size_t primary_len;
-    std::memcpy(&primary_len, data.data() + offset, sizeof(size_t));
+    std::memcpy(&primary_len, data + offset, sizeof(size_t));
     offset += sizeof(size_t);
-    this->primary.assign(data.data() + offset, primary_len);
+
+    reply.primary.assign(data + offset, primary_len);
     offset += primary_len;
 
     // 4. Backup Server ID
     size_t backup_len;
-    std::memcpy(&backup_len, data.data() + offset, sizeof(size_t));
+    std::memcpy(&backup_len, data + offset, sizeof(size_t));
     offset += sizeof(size_t);
-    this->backup.assign(data.data() + offset, backup_len);
+    
+    reply.backup.assign(data + offset, backup_len);
+    offset += backup_len;
 }
 
 Ping::Ping() {
@@ -244,34 +253,34 @@ Ping::Ping(int view_number, std::string id) : view_num(std::move(view_number)), 
     this->type = MessageType::PING;
 }
 
-std::vector<char> Ping::serialize() {
+std::vector<char> Ping::serialize(Ping* p) {
     std::vector<char> buffer;
     
     // 1. Message Type
-    append_to_buffer(buffer, this->type);
+    append_to_buffer(buffer, p->type);
 
     // 2. Server's view #
-    append_to_buffer(buffer, this->view_num);
+    append_to_buffer(buffer, p->view_num);
     
     // 3. Server ID
-    append_to_buffer(buffer, this->server_id);
+    append_to_buffer(buffer, p->server_id);
 
     return buffer;
 }
 
-void Ping::deserialize(const std::vector<char>& data) {
+void deserialize(char* data, Ping &p) {
     size_t offset = 0;
 
     // 1. Message Type (skip)
     offset += sizeof(MessageType);
     
     // 2. View Number
-    std::memcpy(&this->view_num, data.data() + offset, sizeof(int));
+    std::memcpy(&p.view_num, data + offset, sizeof(int));
     offset += sizeof(int);
 
     // 3. Server ID
     size_t id_len;
-    std::memcpy(&id_len, data.data() + offset, sizeof(size_t));
+    std::memcpy(&id_len, data + offset, sizeof(size_t));
     offset += sizeof(size_t);
-    this->server_id.assign(data.data() + offset, id_len);
+    p.server_id.assign(data + offset, id_len);
 }

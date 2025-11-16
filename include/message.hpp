@@ -11,7 +11,8 @@ enum class MessageType : int {
     CLIENT_REPLY = 1,
     PRIMARY_REQUEST = 2,
     PRIMARY_REPLY = 3,
-    PING = 4
+    PING = 4,
+    VIEW_REPLY = 5,
 };
 
 // // Enum for command types within a ClientRequest
@@ -90,8 +91,8 @@ public:
     ViewReply();
     explicit ViewReply(int view_num, std::string primary, std::string backup);
     
-    std::vector<char> serialize() override;
-    void deserialize(const std::vector<char>& data) override;
+    static std::vector<char> serialize(ViewReply *reply);
+    static void deserialize(char* data, ViewReply &reply);
 };
 
 /**
@@ -106,6 +107,6 @@ public:
     Ping();
     explicit Ping(int view_num, std::string id);
 
-    std::vector<char> serialize() override;
-    void deserialize(const std::vector<char>& data) override;
+    static std::vector<char> serialize(Ping *p);
+    static void deserialize(char* data, Ping &p);
 };

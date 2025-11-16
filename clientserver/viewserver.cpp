@@ -53,8 +53,8 @@ ViewReply ViewServer::handlePing(const std::string server_id, int server_view_nu
 
 void ViewServer::onPingCheckTimer() {
     std::lock_guard<std::mutex> lock(mtx);
-    for (auto const& pair : serverToLastPinged) {
-        serverToLastPinged[pair.first] += 1;
+    for (auto &pair : serverToLastPinged) {
+        pair.second++;
     }
     if (primaryAcked) {
       std::vector<std::string> idleServers;
@@ -109,12 +109,13 @@ int main() {
         std::cout << received << std::endl;
         if (received)
         {
+            Ping ping;
             std::cout << "Received client message" << std::endl;
-            Command req = deserializeCommand(buffer);
+            Ping::deserialize(buffer, ping);
             std::cout << "Deserialized message" << std::endl;
-            Command resp = viewserver.handlePing(req);
+            ViewReply reply = viewserver.handlePing(ping.server_id, ping.view_num);
             std::cout << "Handled request" << std::endl;
-            server.send_message(resp);
+            server.send_message(reply, ping.server_id);
             std::cout << "Sent response to client" << std::endl;
         }
         else
