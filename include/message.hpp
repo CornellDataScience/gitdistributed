@@ -14,15 +14,6 @@ enum class MessageType : int {
     PING = 4
 };
 
-// // Enum for command types within a ClientRequest
-// enum class CommandType : int {
-//     INIT = 0,
-//     ADD = 1,
-//     COMMIT = 2,
-//     PUSH = 3,
-//     PULL = 4
-// };
-
 /**
  * @class Message
  * @brief Base class for all network messages.
