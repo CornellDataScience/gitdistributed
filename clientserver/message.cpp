@@ -200,7 +200,7 @@ ViewReply::ViewReply(int view_num, std::string primary, std::string backup)
     this->type = MessageType::PRIMARY_REPLY;
 }
 
-std::vector<char> serialize(ViewReply* reply) {
+std::vector<char> ViewReply::serialize(ViewReply* reply) {
     std::vector<char> buffer;
 
     // 1. Message Type
@@ -218,7 +218,7 @@ std::vector<char> serialize(ViewReply* reply) {
     return buffer;
 }
 
-void deserialize(char* data, ViewReply &reply) {
+void ViewReply::deserialize(char* data, ViewReply &reply) {
     size_t offset = 0;
 
     // 1. Message Type (skip)
@@ -268,7 +268,7 @@ std::vector<char> Ping::serialize(Ping* p) {
     return buffer;
 }
 
-void deserialize(char* data, Ping &p) {
+void Ping::deserialize(char* data, Ping &p) {
     size_t offset = 0;
 
     // 1. Message Type (skip)

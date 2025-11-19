@@ -73,7 +73,7 @@ void push() {
 
             // Check if the file opened successfully
             if (input_file.is_open()) {
-                std::vector<char> content((std::istreambuf_iterator<char>(input_file)),
+                std::string content((std::istreambuf_iterator<char>(input_file)),
                                     std::istreambuf_iterator<char>());
                 
                 // Initialize client request fields
