@@ -34,9 +34,13 @@ void handle_connection(int connected_fd) {
             // std::cout << reply.command.file_name << std::endl;
             // std::cout << reply.command.data << std::endl;
             server.send_message(reply, connected_fd);
-            std::cout << "Sent response to client" << std::endl;
+            std::cout << "Sent response to client " << connected_fd << std::endl;
         } else {
-            std::cerr << "[ERROR] recv failed: " << strerror(errno) << std::endl;
+            // if errno == 0, connection is closed
+            if (errno != 0) {
+                std::cerr << "[ERROR] recv failed: " << strerror(errno) << std::endl;
+            }
+            
             return;
         }
     }
@@ -44,6 +48,7 @@ void handle_connection(int connected_fd) {
 
 int main() {
     std::cout << "Server listening on port " << PORT << "\n";
+    std::srand(std::time(0));
 
     while (true) {
         int connected_fd = server.connect(); // inside connect(), create new thread for each connection

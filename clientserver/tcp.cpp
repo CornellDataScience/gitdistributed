@@ -131,8 +131,7 @@ bool TcpServer::receive_message(char *buffer, const int connected_fd)
 {
     int target_fd = connected_fd;
     std::cout << "Waiting for receive from fd " << target_fd << std::endl;
-    std::cout << "Socket_fd " << socket_fd << std::endl;
-    
+
     int bytes_received = recv(target_fd, buffer, BUFFER_SIZE - 1, 0);
     std::cout << bytes_received << std::endl;
     if (bytes_received > 0)
@@ -140,7 +139,10 @@ bool TcpServer::receive_message(char *buffer, const int connected_fd)
         buffer[bytes_received] = '\0';
         return true;
     } else {
-        std::cout << "errno = " << strerror(errno) << std::endl;
+        // if bytes_received == 0, connection closed
+        if (errno != 0) {
+            std::cout << "errno = " << strerror(errno) << std::endl;
+        }
         
         return false;
     }
