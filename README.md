@@ -12,3 +12,5 @@ Nathan Chu (nwc35)
 Arnav Kaul (ak2498)
 
 Harshaan Chugh (hsc53)
+
+Laerdon Kim (lyk25)
