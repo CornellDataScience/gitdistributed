@@ -54,7 +54,7 @@ void commit() {
 
 void push() {
     TcpServer server(PORT, TcpMode::CLIENT);
-    server.connect(SERVER_IP);
+    int connected_fd = server.connect(SERVER_IP);
     std::cout << "Client connected to port " << PORT << "\n";
 
     // ClientRequest(CommandType cmd, std::string name, std::vector<char> data = {});
@@ -92,10 +92,10 @@ void push() {
     std::cout << "Sending message" << std::endl;
 
     // make continuous requests
-    server.send_message(request, SERVER_IP);
+    server.send_message(request, connected_fd);
 
     std::vector<char> buffer = std::vector<char>(1024);
-    bool received = server.receive_message(buffer.data());
+    bool received = server.receive_message(buffer.data(), connected_fd);
     if (received)
     {
         ClientReply req;
@@ -117,16 +117,16 @@ void push() {
 void pull() {
     TcpServer client(PORT, TcpMode::CLIENT);
     std::cout << "Server listening on port " << PORT << "\n";    
-    client.connect();
+    int connected_fd = client.connect();
     
     // send pull request
     ClientRequest request;
     request = ClientRequest(CommandType::CLIENT_PULL);
-    client.send_message(request);
+    client.send_message(request, connected_fd);
     
     // receive server response
     std::vector<char> in_buffer = std::vector<char>(1024);
-    if (!client.receive_message(in_buffer.data())) {
+    if (!client.receive_message(in_buffer.data(), connected_fd)) {
         std::cerr << "[ERROR] no response from server\n";
         return;
     }

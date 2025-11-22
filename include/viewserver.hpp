@@ -20,6 +20,7 @@ class ViewServer
         ViewServer();
         ~ViewServer();
         ViewReply handlePing(const std::string server_id, int server_view_num);
+        std::mutex mtx;
     
     private:
         std::unordered_map<std::string, int> serverToLastPinged;
@@ -32,5 +33,4 @@ class ViewServer
 
         std::thread pingCheckTimerThread;
         std::atomic<bool> running{false};
-        std::mutex mtx;
 };

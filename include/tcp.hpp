@@ -3,6 +3,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <iostream>
+#include <fcntl.h>
 #include "message.hpp"
 
 enum class TcpMode 
@@ -26,8 +27,8 @@ public:
   TcpServer(int port, TcpMode mode);
   ~TcpServer();
 
-  void connect(const std::string &server_address = "");
+  int connect(const std::string &server_address = "");
 
-  void send_message(Message& message, const std::string &dest_address = "");
-  bool receive_message(char *buffer, const std::string &source_address = "");
+  void send_message(Message& message, const int connected_fd);
+  bool receive_message(char *buffer, const int connected_fd);
 };
