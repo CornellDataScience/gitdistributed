@@ -5,6 +5,8 @@ Andrew Park (acp225)
 
 Tanvi Bhave (tjb279)
 
+Skai Nzeuton (san82)
+
 Kaitlyn Lu (kl995)
 
 Nathan Chu (nwc35)
