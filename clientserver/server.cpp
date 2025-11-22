@@ -37,6 +37,7 @@ void handle_connection(int connected_fd) {
             std::cout << "Sent response to client" << std::endl;
         } else {
             std::cerr << "[ERROR] recv failed: " << strerror(errno) << std::endl;
+            return;
         }
     }
 }
@@ -48,8 +49,7 @@ int main() {
         int connected_fd = server.connect(); // inside connect(), create new thread for each connection
 
         // for each connection, run the listening/responding loop
-        std::thread t(handle_connection, connected_fd);
-        t.detach();
+        std::thread(handle_connection, connected_fd).detach();
     }
     
     return 0;
