@@ -19,7 +19,10 @@ ViewServer::ViewServer()
     pingCheckTimerThread = std::thread([this]() {
         while (running) {
             std::this_thread::sleep_for(std::chrono::milliseconds(PING_INTERVAL_MS));
-            this->onPingCheckTimer();
+            {
+                std::unique_lock<std::mutex> pingCheckLock(viewserver.mtx);
+                this->onPingCheckTimer();
+            }
         }
     });
 }
@@ -55,7 +58,7 @@ ViewReply ViewServer::handlePing(const std::string server_id, int server_view_nu
 
 void ViewServer::onPingCheckTimer() {
     std::cout << "PING CHECK TIMER TRIGGERED" << std::endl;
-    std::lock_guard<std::mutex> lock(mtx);
+
     for (auto &pair : serverToLastPinged) {
         pair.second++;
     }

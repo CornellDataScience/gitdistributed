@@ -4,14 +4,23 @@
 
 #define BUFFER_SIZE 1024
 
+TcpServer::TcpServer() : port(0), mode(TcpMode::SERVER), socket_fd(-1), connected_fd(-1)
+{
+    // Default constructor does nothing
+}
+
 TcpServer::TcpServer(int port, TcpMode mode) : port(port), mode(mode), socket_fd(-1), connected_fd(-1)
 {
-    if (mode == TcpMode::SERVER)
-    {
+    init(port, mode);
+}
+
+void TcpServer::init(int port, TcpMode mode) {
+    this->port = port;
+    this->mode = mode;
+
+    if (mode == TcpMode::SERVER) {
         initialize_server();
-    }
-    else
-    {
+    } else {
         initialize_client();
     }
 }
@@ -62,13 +71,14 @@ void TcpServer::initialize_client()
     }
 }
 
-int TcpServer::connect(const std::string &server_address)
+int TcpServer::connect(const std::string &server_address, const int port)
 {
     if (mode == TcpMode::SERVER)
     {
         // Server: accept incoming connection
         struct sockaddr_in client_addr;
         socklen_t addrlen = sizeof(client_addr);
+        std::cout << socket_fd << std::endl;
         connected_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &addrlen);
         
         if (connected_fd < 0)

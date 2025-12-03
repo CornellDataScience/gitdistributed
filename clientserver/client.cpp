@@ -54,7 +54,7 @@ void commit() {
 
 void push() {
     TcpServer server(PORT, TcpMode::CLIENT);
-    int connected_fd = server.connect(SERVER_IP);
+    int connected_fd = server.connect(SERVER_IP, 8080);
     std::cout << "Client connected to port " << PORT << "\n";
 
     // ClientRequest(CommandType cmd, std::string name, std::vector<char> data = {});
