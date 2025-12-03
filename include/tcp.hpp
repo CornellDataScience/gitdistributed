@@ -15,19 +15,22 @@ enum class TcpMode
 class TcpServer
 {
 private:
+  void initialize_server();
+  void initialize_client();
+
+public:
   int port;
   TcpMode mode;
   int socket_fd;
   int connected_fd;
 
-  void initialize_server();
-  void initialize_client();
-
-public:
+  TcpServer();
   TcpServer(int port, TcpMode mode);
   ~TcpServer();
 
-  int connect(const std::string &server_address = "");
+  void init(int port, TcpMode mode);
+
+  int connect(const std::string &server_address = "", const int port = 0);
 
   void send_message(Message& message, const int connected_fd);
   bool receive_message(char *buffer, const int connected_fd);

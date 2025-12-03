@@ -4,10 +4,9 @@
 #include "commands.hpp"
 #include "message.hpp"
 
-#define PORT 8080
 #define BUFFER_SIZE 1024
 
-TcpServer server(PORT, TcpMode::SERVER);
+TcpServer server;
 GitApp gitApp;
 
 void handle_connection(int connected_fd) {
@@ -46,9 +45,24 @@ void handle_connection(int connected_fd) {
     }
 }
 
-int main() {
-    std::cout << "Server listening on port " << PORT << "\n";
-    std::srand(std::time(0));
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        std::cout << "Please provide a port." << std::endl;
+    }
+
+    int port = std::stoi(argv[1]);
+
+    std::cout << server.port << std::endl;
+    std::cout << server.socket_fd << std::endl;
+    std::cout << server.connected_fd << std::endl;
+
+    server.init(port, TcpMode::SERVER);
+
+    std::cout << server.port << std::endl;
+    std::cout << server.socket_fd << std::endl;
+    std::cout << server.connected_fd << std::endl;
+
+    std::cout << "Server listening on port " << port << "\n";
 
     while (true) {
         int connected_fd = server.connect(); // inside connect(), create new thread for each connection
