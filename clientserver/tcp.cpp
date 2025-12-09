@@ -4,14 +4,23 @@
 
 #define BUFFER_SIZE 1024
 
+TcpServer::TcpServer() : port(0), mode(TcpMode::SERVER), socket_fd(-1), connected_fd(-1)
+{
+    // Default constructor does nothing
+}
+
 TcpServer::TcpServer(int port, TcpMode mode) : port(port), mode(mode), socket_fd(-1), connected_fd(-1)
 {
-    if (mode == TcpMode::SERVER)
-    {
+    init(port, mode);
+}
+
+void TcpServer::init(int port, TcpMode mode) {
+    this->port = port;
+    this->mode = mode;
+
+    if (mode == TcpMode::SERVER) {
         initialize_server();
-    }
-    else
-    {
+    } else {
         initialize_client();
     }
 }
@@ -55,50 +64,60 @@ void TcpServer::initialize_server()
 
 void TcpServer::initialize_client()
 {
+    // if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    // {
+    //     std::cerr << "Socket creation failed\n";
+    //     return;
+    // }
+}
+
+// Accept incoming connection
+int TcpServer::connect()
+{
+    struct sockaddr_in client_addr;
+    socklen_t addrlen = sizeof(client_addr);
+    std::cout << socket_fd << std::endl;
+    connected_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &addrlen);
+    
+    if (connected_fd < 0)
+    {
+        std::cerr << "Accept failed: " << strerror(errno) << std::endl;
+        return -1;
+    }
+    std::cout << "Connection accepted with fd " << connected_fd << std::endl;
+    return connected_fd;
+}
+
+// initiate connection
+int TcpServer::connect(const std::string &server_address, const int port)
+{
+    struct sockaddr_in serv_addr;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+
+    int socket_fd;
+
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
         std::cerr << "Socket creation failed\n";
-        return;
+        return -1;
     }
-}
 
-void TcpServer::connect(const std::string &server_address)
-{
-    if (mode == TcpMode::SERVER)
+    if (inet_pton(AF_INET, server_address.c_str(), &serv_addr.sin_addr) <= 0)
     {
-        // Server: accept incoming connection
-        struct sockaddr_in client_addr;
-        socklen_t addrlen = sizeof(client_addr);
-        connected_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &addrlen);
-        if (connected_fd < 0)
-        {
-            std::cerr << "Accept failed: " << strerror(errno) << std::endl;
-            return;
-        }
-        std::cout << "Connection accepted with fd " << connected_fd << std::endl;
+        std::cerr << "Invalid address: " << server_address << std::endl;
+        return -1;
     }
-    else
+
+    if (::connect(socket_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
-        // Client: connect to server
-        struct sockaddr_in serv_addr;
-        serv_addr.sin_family = AF_INET;
-        serv_addr.sin_port = htons(port);
-
-        if (inet_pton(AF_INET, server_address.c_str(), &serv_addr.sin_addr) <= 0)
-        {
-            std::cerr << "Invalid address: " << server_address << std::endl;
-            return;
-        }
-
-        if (::connect(socket_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-        {
-            std::cerr << "Connection failed: " << strerror(errno) << std::endl;
-            return;
-        }
-        
-        connected_fd = socket_fd;
-        std::cout << "Connected to server with fd " << connected_fd << std::endl;
+        std::cerr << "Connection failed: " << strerror(errno) << std::endl;
+        return -1;
     }
+    
+    connected_fd = socket_fd;
+    std::cout << "Connected to server with fd " << connected_fd << std::endl;
+    return connected_fd;
 }
 
 static bool send_all(int fd, const char* data, size_t len) {
@@ -111,7 +130,7 @@ static bool send_all(int fd, const char* data, size_t len) {
     return true;
 }
 
-void TcpServer::send_message(Message &message, const std::string &dest_address)
+void TcpServer::send_message(Message &message, const int connected_fd)
 {
     std::vector<char> resp_buff = Message::serialize(message);
 
@@ -124,12 +143,11 @@ void TcpServer::send_message(Message &message, const std::string &dest_address)
     std::cout << "Sending " << nbytes << " bytes to fd " << connected_fd << std::endl;
 }
 
-bool TcpServer::receive_message(char *buffer, const std::string &source_address)
+bool TcpServer::receive_message(char *buffer, const int connected_fd)
 {
     int target_fd = connected_fd;
     std::cout << "Waiting for receive from fd " << target_fd << std::endl;
-    std::cout << "Socket_fd " << socket_fd << std::endl;
-    
+
     int bytes_received = recv(target_fd, buffer, BUFFER_SIZE - 1, 0);
     std::cout << bytes_received << std::endl;
     if (bytes_received > 0)
@@ -137,7 +155,10 @@ bool TcpServer::receive_message(char *buffer, const std::string &source_address)
         buffer[bytes_received] = '\0';
         return true;
     } else {
-        std::cout << "errno = " << strerror(errno) << std::endl;
+        // if bytes_received == 0, connection closed
+        if (errno != 0) {
+            std::cout << "errno = " << strerror(errno) << std::endl;
+        }
         
         return false;
     }

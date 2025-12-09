@@ -45,6 +45,12 @@ std::vector<char> Message::serialize(Message &message) {
     else if(message_type == MessageType::CLIENT_REPLY){
         serialized = ClientReply::serialize((ClientReply *) &message);
     }
+    else if(message_type == MessageType::PING){
+        serialized = Ping::serialize((Ping *) &message);
+    }
+    else if(message_type == MessageType::VIEW_REPLY){
+        serialized = ViewReply::serialize((ViewReply *) &message);
+    }
 
     return serialized;
 }
@@ -249,5 +255,100 @@ void BackupReply::deserialize(char* data, BackupReply& reply) {
     ForwardedRequest::deserialize(data, reply.forwarded_request);
 }
 
+ViewReply::ViewReply() {
+    this->type = MessageType::VIEW_REPLY;
+    this->view_num = 0;
+    this->primary = "";
+    this->backup = "";
+}
 
+ViewReply::ViewReply(int view_num, std::string primary, std::string backup)
+    : view_num(view_num), primary(std::move(primary)), backup(std::move(backup)) {
+    this->type = MessageType::VIEW_REPLY;
+}
 
+std::vector<char> ViewReply::serialize(ViewReply* reply) {
+    std::vector<char> buffer;
+
+    // 1. Message Type
+    append_to_buffer(buffer, reply->type);
+
+    // 2. View Number
+    append_to_buffer(buffer, reply->view_num);
+
+    // 3. Primary Server ID
+    append_to_buffer(buffer, reply->primary);
+
+    // 4. Backup Server ID
+    append_to_buffer(buffer, reply->backup);
+
+    return buffer;
+}
+
+void ViewReply::deserialize(char* data, ViewReply &reply) {
+    size_t offset = 0;
+
+    // 1. Message Type (skip)
+    offset += sizeof(MessageType);
+
+    // 2. View Number
+    reply.view_num = read_int(data + offset);
+    offset += sizeof(int);
+
+    // 3. Primary Server ID
+    int primary_len = read_int(data + offset);
+    offset += sizeof(int);
+
+    reply.primary = std::string(data + offset, primary_len);
+    offset += primary_len;
+    
+    // 4. Backup Server ID
+    int backup_len = read_int(data + offset);
+    offset += sizeof(int);
+
+    reply.backup = std::string(data + offset, backup_len);
+}
+
+Ping::Ping() {
+    this->type = MessageType::PING;
+}
+
+Ping::Ping(int view_number, std::string id) : view_num(std::move(view_number)), server_id(std::move(id)) {
+    this->type = MessageType::PING;
+}
+
+std::vector<char> Ping::serialize(Ping* p) {
+    std::vector<char> buffer;
+    
+    // 1. Message Type
+    append_to_buffer(buffer, p->type);
+
+    // 2. Server's view #
+    append_to_buffer(buffer, p->view_num);
+    
+    // 3. Server ID
+    append_to_buffer(buffer, p->server_id);
+
+    return buffer;
+}
+
+void Ping::deserialize(char* data, Ping &p) {
+    size_t offset = 0;
+
+    // 1. Message Type (skip)
+    offset += sizeof(MessageType);
+    
+    // 2. View Number
+    p.view_num = read_int(data + offset);
+    // p.view_num.assign(data + offset, size_t(sizeof(int)));
+    // std::memcpy(&(p.view_num), data + offset, sizeof(int));
+    offset += sizeof(int);
+
+    // // 3. Server ID
+    int id_len;
+    std::memcpy(&id_len, data + offset, sizeof(int));
+    offset += sizeof(int);
+    p.server_id = std::string(data + offset, id_len);
+
+    std::cout << p.server_id << std::endl;
+}

@@ -11,7 +11,8 @@ enum class MessageType : int {
     CLIENT_REPLY = 1,
     FORWARDED_REQUEST = 2,
     BACKUP_REPLY = 3,
-    PING = 4
+    PING = 4,
+    VIEW_REPLY = 5
 };
 
 /**
@@ -68,7 +69,6 @@ public:
     static void deserialize(char* data, ClientReply &reply);
 };
 
-
 class ForwardedRequest : public Message {
 public:
     ClientRequest client_request;
@@ -89,10 +89,35 @@ class BackupReply : public Message {
     static void deserialize(char* data, BackupReply& reply);
 };
 
+/**
+ * @class ViewReply
+ * @brief Represents a reply from the viewserver to the client with updated view.
+ */
 class ViewReply : public Message {
+public:
+    int view_num;
+    std::string primary;
+    std::string backup;
 
+    ViewReply();
+    explicit ViewReply(int view_num, std::string primary, std::string backup);
+    
+    static std::vector<char> serialize(ViewReply *reply);
+    static void deserialize(char* data, ViewReply &reply);
 };
 
+/**
+ * @class Ping
+ * @brief Represents a ping message from server to viewserver.
+ */
 class Ping : public Message {
+public:
+    int view_num;
+    std::string server_id;
+    
+    Ping();
+    explicit Ping(int view_num, std::string id);
 
+    static std::vector<char> serialize(Ping *p);
+    static void deserialize(char* data, Ping &p);
 };
