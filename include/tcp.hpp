@@ -30,7 +30,8 @@ public:
 
   void init(int port, TcpMode mode);
 
-  int connect(const std::string &server_address = "", const int port = 0);
+  int connect();
+  int connect(const std::string &server_address, const int port);
 
   void send_message(Message& message, const int connected_fd);
   bool receive_message(char *buffer, const int connected_fd);

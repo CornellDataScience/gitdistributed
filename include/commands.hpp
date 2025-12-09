@@ -18,3 +18,5 @@ struct Command
 
 Command deserializeCommand(char *buffer);
 size_t serializeCommand(const Command &cmd, char *buff);
+
+int read_int(const char *buff);

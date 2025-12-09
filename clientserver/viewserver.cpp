@@ -3,7 +3,7 @@
 #include <iostream>
 
 constexpr int PING_INTERVAL_MS = 1000;
-#define PORT 8080
+#define PORT 8067
 #define BUFFER_SIZE 1024
 #define SERVER_IP "127.0.0.1"
 
@@ -47,7 +47,10 @@ ViewReply ViewServer::handlePing(const std::string server_id, int server_view_nu
         primaryAcked = true;
     }
 
-    activeServers.insert(server_id);
+    if (server_id != std::string("client")) {
+        activeServers.insert(server_id);
+    }
+    
     
     ViewReply view_reply;
     view_reply.view_num = current_view.view_num;
@@ -57,8 +60,6 @@ ViewReply ViewServer::handlePing(const std::string server_id, int server_view_nu
 }
 
 void ViewServer::onPingCheckTimer() {
-    std::lock_guard<std::mutex> lock(mtx);
-
     if (primaryAcked) {
       std::vector<std::string> idleServers;
       
@@ -108,9 +109,9 @@ void handle_connection(int connected_fd) {
         if (received)
         {
             Ping ping;
-            std::cout << "Received client message" << std::endl;
+            std::cout << "Received ping" << std::endl;
             Ping::deserialize(buffer, ping);
-            std::cout << "Deserialized message" << std::endl;
+            std::cout << "Deserialized ping" << std::endl;
             
             ViewReply reply;
             {

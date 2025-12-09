@@ -64,54 +64,60 @@ void TcpServer::initialize_server()
 
 void TcpServer::initialize_client()
 {
+    // if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
+    // {
+    //     std::cerr << "Socket creation failed\n";
+    //     return;
+    // }
+}
+
+// Accept incoming connection
+int TcpServer::connect()
+{
+    struct sockaddr_in client_addr;
+    socklen_t addrlen = sizeof(client_addr);
+    std::cout << socket_fd << std::endl;
+    connected_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &addrlen);
+    
+    if (connected_fd < 0)
+    {
+        std::cerr << "Accept failed: " << strerror(errno) << std::endl;
+        return -1;
+    }
+    std::cout << "Connection accepted with fd " << connected_fd << std::endl;
+    return connected_fd;
+}
+
+// initiate connection
+int TcpServer::connect(const std::string &server_address, const int port)
+{
+    struct sockaddr_in serv_addr;
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(port);
+
+    int socket_fd;
+
     if ((socket_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0)
     {
         std::cerr << "Socket creation failed\n";
-        return;
+        return -1;
     }
-}
 
-int TcpServer::connect(const std::string &server_address, const int port)
-{
-    if (mode == TcpMode::SERVER)
+    if (inet_pton(AF_INET, server_address.c_str(), &serv_addr.sin_addr) <= 0)
     {
-        // Server: accept incoming connection
-        struct sockaddr_in client_addr;
-        socklen_t addrlen = sizeof(client_addr);
-        std::cout << socket_fd << std::endl;
-        connected_fd = accept(socket_fd, (struct sockaddr *)&client_addr, &addrlen);
-        
-        if (connected_fd < 0)
-        {
-            std::cerr << "Accept failed: " << strerror(errno) << std::endl;
-            return -1;
-        }
-        std::cout << "Connection accepted with fd " << connected_fd << std::endl;
-        return connected_fd;
+        std::cerr << "Invalid address: " << server_address << std::endl;
+        return -1;
     }
-    else
+
+    if (::connect(socket_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
     {
-        // Client: connect to server
-        struct sockaddr_in serv_addr;
-        serv_addr.sin_family = AF_INET;
-        serv_addr.sin_port = htons(port);
-
-        if (inet_pton(AF_INET, server_address.c_str(), &serv_addr.sin_addr) <= 0)
-        {
-            std::cerr << "Invalid address: " << server_address << std::endl;
-            return -1;
-        }
-
-        if (::connect(socket_fd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-        {
-            std::cerr << "Connection failed: " << strerror(errno) << std::endl;
-            return -1;
-        }
-        
-        connected_fd = socket_fd;
-        std::cout << "Connected to server with fd " << connected_fd << std::endl;
-        return connected_fd;
+        std::cerr << "Connection failed: " << strerror(errno) << std::endl;
+        return -1;
     }
+    
+    connected_fd = socket_fd;
+    std::cout << "Connected to server with fd " << connected_fd << std::endl;
+    return connected_fd;
 }
 
 static bool send_all(int fd, const char* data, size_t len) {

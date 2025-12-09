@@ -189,7 +189,7 @@ class BackupReply : public Message {
 };
 
 ViewReply::ViewReply() {
-    this->type = MessageType::PRIMARY_REPLY;
+    this->type = MessageType::VIEW_REPLY;
     this->view_num = 0;
     this->primary = "";
     this->backup = "";
@@ -197,7 +197,7 @@ ViewReply::ViewReply() {
 
 ViewReply::ViewReply(int view_num, std::string primary, std::string backup)
     : view_num(view_num), primary(std::move(primary)), backup(std::move(backup)) {
-    this->type = MessageType::PRIMARY_REPLY;
+    this->type = MessageType::VIEW_REPLY;
 }
 
 std::vector<char> ViewReply::serialize(ViewReply* reply) {
@@ -225,24 +225,21 @@ void ViewReply::deserialize(char* data, ViewReply &reply) {
     offset += sizeof(MessageType);
 
     // 2. View Number
-    std::memcpy(&reply.view_num, data + offset, sizeof(int));
+    reply.view_num = read_int(data + offset);
     offset += sizeof(int);
 
     // 3. Primary Server ID
-    size_t primary_len;
-    std::memcpy(&primary_len, data + offset, sizeof(size_t));
-    offset += sizeof(size_t);
+    int primary_len = read_int(data + offset);
+    offset += sizeof(int);
 
-    reply.primary.assign(data + offset, primary_len);
+    reply.primary = std::string(data + offset, primary_len);
     offset += primary_len;
-
-    // 4. Backup Server ID
-    size_t backup_len;
-    std::memcpy(&backup_len, data + offset, sizeof(size_t));
-    offset += sizeof(size_t);
     
-    reply.backup.assign(data + offset, backup_len);
-    offset += backup_len;
+    // 4. Backup Server ID
+    int backup_len = read_int(data + offset);
+    offset += sizeof(int);
+
+    reply.backup = std::string(data + offset, backup_len);
 }
 
 Ping::Ping() {
@@ -275,12 +272,16 @@ void Ping::deserialize(char* data, Ping &p) {
     offset += sizeof(MessageType);
     
     // 2. View Number
-    std::memcpy(&p.view_num, data + offset, sizeof(int));
+    p.view_num = read_int(data + offset);
+    // p.view_num.assign(data + offset, size_t(sizeof(int)));
+    // std::memcpy(&(p.view_num), data + offset, sizeof(int));
     offset += sizeof(int);
 
-    // 3. Server ID
-    size_t id_len;
-    std::memcpy(&id_len, data + offset, sizeof(size_t));
-    offset += sizeof(size_t);
-    p.server_id.assign(data + offset, id_len);
+    // // 3. Server ID
+    int id_len;
+    std::memcpy(&id_len, data + offset, sizeof(int));
+    offset += sizeof(int);
+    p.server_id = std::string(data + offset, id_len);
+
+    std::cout << p.server_id << std::endl;
 }

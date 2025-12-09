@@ -4,6 +4,7 @@
 #include "tcp.hpp"
 #include "commands.hpp"
 #include "message.hpp"
+#include <viewserver.hpp>
 
 #define PORT 8080
 #define SERVER_IP "127.0.0.1"
@@ -11,6 +12,18 @@
 
 using namespace std;
 using namespace std::filesystem;
+
+#define VIEWSERVER_IP "127.0.0.1"
+#define VIEWSERVER_PORT 8067
+#define PING_INTERVAL_MS 500
+
+View view;
+
+std::string server_id = "client";
+
+TcpServer server(PORT, TcpMode::CLIENT);
+
+void ping(int viewserver_fd);
 
 void init() {
     path folder = ".gitd";
@@ -53,11 +66,20 @@ void commit() {
 }
 
 void push() {
-    TcpServer server(PORT, TcpMode::CLIENT);
-    int connected_fd = server.connect(SERVER_IP, 8080);
-    std::cout << "Client connected to port " << PORT << "\n";
+    int viewserver_fd = server.connect(VIEWSERVER_IP, VIEWSERVER_PORT);
+    std::thread(ping, viewserver_fd).detach();
 
-    // ClientRequest(CommandType cmd, std::string name, std::vector<char> data = {});
+    while (view.view_num == 0) {
+        // busy wait
+    }
+
+    int colon_index = view.primary.find(":");
+    std::string primary_ip = view.primary.substr(0, colon_index);
+    int primary_port = std::stoi(view.primary.substr(colon_index + 1));
+
+    int connected_fd = server.connect(primary_ip, primary_port);
+    std::cout << "Client connected to " << primary_ip << ":" << primary_port << "\n";
+
     ClientRequest request;
     
     const path commitspath = ".gitd/commits/";
@@ -94,7 +116,7 @@ void push() {
     // make continuous requests
     server.send_message(request, connected_fd);
 
-    std::vector<char> buffer = std::vector<char>(1024);
+    std::vector<char> buffer = std::vector<char>(BUFFER_SIZE);
     bool received = server.receive_message(buffer.data(), connected_fd);
     if (received)
     {
@@ -195,4 +217,28 @@ int main(int argc, char* argv[]) {
     }
 
     return 0;
+}
+
+void ping(int viewserver_fd) {
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(PING_INTERVAL_MS));
+        // want: message containing view, server_id
+        Ping myPing = Ping{view.view_num, server_id};
+        server.send_message(myPing, viewserver_fd);
+
+        std::vector<char> buffer = std::vector<char>(BUFFER_SIZE);
+        bool received = server.receive_message(buffer.data(), viewserver_fd);
+        if (received)
+        {
+            ViewReply req;
+            ViewReply::deserialize(buffer.data(), req);
+            
+            view = View{req.view_num, req.primary, req.backup};
+            std::cout << "view updated" << std::endl;
+        }
+        else
+        {
+            std::cerr << "[ERROR] request failed: " << strerror(errno) << std::endl;
+        }
+    }
 }
