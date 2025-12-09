@@ -7,7 +7,7 @@ constexpr int PING_INTERVAL_MS = 1000;
 #define BUFFER_SIZE 1024
 #define SERVER_IP "127.0.0.1"
 
-std::unordered_map<std::string, int> serverToLastPinged;
+std::unordered_set<std::string> activeServers;
 View current_view;
 
 ViewServer::ViewServer()
@@ -42,7 +42,7 @@ ViewReply ViewServer::handlePing(const std::string server_id, int server_view_nu
         primaryAcked = true;
     }
 
-    serverToLastPinged[server_id] = 0;
+    activeServers.insert(server_id);
     
     ViewReply view_reply;
     view_reply.view_num = current_view.view_num;
@@ -52,32 +52,29 @@ ViewReply ViewServer::handlePing(const std::string server_id, int server_view_nu
 }
 
 void ViewServer::onPingCheckTimer() {
-    std::cout << "PING CHECK TIMER TRIGGERED" << std::endl;
     std::lock_guard<std::mutex> lock(mtx);
-    for (auto &pair : serverToLastPinged) {
-        pair.second++;
-    }
+
     if (primaryAcked) {
       std::vector<std::string> idleServers;
       
-      for (auto const& pair : serverToLastPinged) {
-          if (pair.first != current_view.primary && pair.first != current_view.backup && pair.second < 2) {
-              idleServers.push_back(pair.first);
+      for (auto const& s : activeServers) {
+          if (s != current_view.primary && s != current_view.backup) {
+              idleServers.push_back(s);
           }
       }
       bool viewChanged = false;
       std::string primary = current_view.primary;
       std::string backup = current_view.backup;
       
-      // checking if the primary is not unassigned, and if >= 2 (has died)
-      if (primary != "" && ((serverToLastPinged.count(primary) == 0 || serverToLastPinged[primary] >= 2))) {
+      // checking if the primary is not unassigned and if primary is not active
+      if (primary != "" && (activeServers.count(primary) == 0)) {
           primary = backup;
           backup = "";
           viewChanged = true;
       }
 
       // checking analogously for backup...
-      if (backup != "" && ((serverToLastPinged.count(backup) == 0) || serverToLastPinged[backup] >= 2)) {
+      if (backup != "" && (activeServers.count(backup) == 0)) {
         backup = "";
         viewChanged = true;
       }
@@ -93,6 +90,7 @@ void ViewServer::onPingCheckTimer() {
           primaryAcked = false;
       }
     }
+    activeServers.clear();
 }
 
 int main() {

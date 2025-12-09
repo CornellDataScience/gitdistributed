@@ -1,7 +1,7 @@
 #pragma once
 #include "tcp.hpp"
 #include <string>
-#include <unordered_map>
+#include <unordered_set>
 #include <thread>
 #include <atomic>
 #include <mutex>
@@ -22,7 +22,7 @@ class ViewServer
         ViewReply handlePing(const std::string server_id, int server_view_num);
     
     private:
-        std::unordered_map<std::string, int> serverToLastPinged;
+        std::unordered_set<std::string> activeServers;
         View current_view;
         bool primaryAcked;
         
