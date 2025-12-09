@@ -10,13 +10,19 @@ constexpr int PING_INTERVAL_MS = 1000;
 std::unordered_set<std::string> activeServers;
 View current_view;
 
+TcpServer server(PORT, TcpMode::SERVER);
+ViewServer viewserver;
+
 ViewServer::ViewServer()
 {
     running = true;
     pingCheckTimerThread = std::thread([this]() {
         while (running) {
             std::this_thread::sleep_for(std::chrono::milliseconds(PING_INTERVAL_MS));
-            this->onPingCheckTimer();
+            {
+                std::unique_lock<std::mutex> pingCheckLock(viewserver.mtx);
+                this->onPingCheckTimer();
+            }
         }
     });
 }
@@ -29,7 +35,6 @@ ViewServer::~ViewServer()
 }
 
 ViewReply ViewServer::handlePing(const std::string server_id, int server_view_num) {
-    std::lock_guard<std::mutex> lock(mtx);
     // initialization of view_nums and primary + backup
     if (current_view.view_num == 0) {
         current_view = View{1, server_id, ""};
@@ -93,18 +98,12 @@ void ViewServer::onPingCheckTimer() {
     activeServers.clear();
 }
 
-int main() {
-    TcpServer server(PORT, TcpMode::SERVER);
-    ViewServer viewserver;
+void handle_connection(int connected_fd) {
     while (true)
     {
-        std::cout << "View Server listening on port " << PORT << "\n";
-
         char buffer[BUFFER_SIZE];
-
-        server.connect();
         
-        bool received = server.receive_message(buffer);
+        bool received = server.receive_message(buffer, connected_fd);
         std::cout << received << std::endl;
         if (received)
         {
@@ -112,16 +111,33 @@ int main() {
             std::cout << "Received client message" << std::endl;
             Ping::deserialize(buffer, ping);
             std::cout << "Deserialized message" << std::endl;
-            ViewReply reply = viewserver.handlePing(ping.server_id, ping.view_num);
+            
+            ViewReply reply;
+            {
+                std::unique_lock<std::mutex> handlePingLock(viewserver.mtx);
+                reply = viewserver.handlePing(ping.server_id, ping.view_num);
+            }
+
             std::cout << "Handled request" << std::endl;
-            server.send_message(reply, ping.server_id);
+            server.send_message(reply, connected_fd);
             std::cout << "Sent response to client" << std::endl;
         }
         else
         {
             std::cerr << "[ERROR] recv failed: " << strerror(errno) << std::endl;
-            return 1;
+            return;
         }
+    }
+}
+
+int main() {
+    std::cout << "View Server listening on port " << PORT << "\n";
+
+    while (true) {
+        int connected_fd = server.connect(); // inside connect(), create new thread for each connection
+
+        // for each connection, run the listening/responding loop
+        std::thread(handle_connection, connected_fd).detach();
     }
 
     return 0;

@@ -12,6 +12,8 @@ private:
   Command handle_pull();
 
 public:
+  std::mutex gitAppMutex;
+  
   GitApp();
   Command handle_client_req(const Command &req);
 };
