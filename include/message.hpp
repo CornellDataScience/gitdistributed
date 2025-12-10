@@ -9,20 +9,11 @@
 enum class MessageType : int {
     CLIENT_REQUEST = 0,
     CLIENT_REPLY = 1,
-    PRIMARY_REQUEST = 2,
-    PRIMARY_REPLY = 3,
+    FORWARDED_REQUEST = 2,
+    BACKUP_REPLY = 3,
     PING = 4,
-    VIEW_REPLY = 5,
+    VIEW_REPLY = 5
 };
-
-// // Enum for command types within a ClientRequest
-// enum class CommandType : int {
-//     INIT = 0,
-//     ADD = 1,
-//     COMMIT = 2,
-//     PUSH = 3,
-//     PULL = 4
-// };
 
 /**
  * @class Message
@@ -76,6 +67,28 @@ public:
 
     static std::vector<char> serialize(ClientReply *reply);
     static void deserialize(char* data, ClientReply &reply);
+};
+
+class ForwardedRequest : public Message {
+public:
+    ClientRequest client_request;
+    std::string sender_address;
+        
+    ForwardedRequest();
+    ForwardedRequest(ClientRequest request, std::string sender_address);
+    static std::vector<char> serialize(ForwardedRequest *request);
+    static void deserialize(char* data, ForwardedRequest &request);
+};
+
+// Backup's acknowledge of request
+class BackupReply : public Message {
+public:
+    ForwardedRequest forwarded_request;
+    std::string sender_address;
+        
+    BackupReply(ForwardedRequest request, std::string sender_address);
+    static std::vector<char> serialize(BackupReply *reply);
+    static void deserialize(char* data, BackupReply& reply);
 };
 
 /**

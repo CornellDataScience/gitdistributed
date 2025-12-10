@@ -137,31 +137,42 @@ void push() {
 }
 
 void pull() {
-    TcpServer client(PORT, TcpMode::CLIENT);
-    std::cout << "Server listening on port " << PORT << "\n";    
-    int connected_fd = client.connect();
+    int viewserver_fd = server.connect(VIEWSERVER_IP, VIEWSERVER_PORT);
+    std::thread(ping, viewserver_fd).detach();
+
+    while (view.view_num == 0) {
+        // busy wait
+    }
+
+    int colon_index = view.primary.find(":");
+    std::string primary_ip = view.primary.substr(0, colon_index);
+    int primary_port = std::stoi(view.primary.substr(colon_index + 1));
+
+    int connected_fd = server.connect(primary_ip, primary_port);
+    std::cout << "Client connected to " << primary_ip << ":" << primary_port << "\n";
     
     // send pull request
     ClientRequest request;
     request = ClientRequest(CommandType::CLIENT_PULL);
-    client.send_message(request, connected_fd);
+    server.send_message(request, connected_fd);
     
     // receive server response
     std::vector<char> in_buffer = std::vector<char>(1024);
-    if (!client.receive_message(in_buffer.data(), connected_fd)) {
+    if (!server.receive_message(in_buffer.data(), connected_fd)) {
         std::cerr << "[ERROR] no response from server\n";
         return;
     }
 
-    Command resp = deserializeCommand(in_buffer.data());
+    ClientReply reply;
+    ClientReply::deserialize(in_buffer.data(), reply);
 
-    if (resp.file_name.empty()) {
+    if (reply.command.file_name.empty()) {
         std::cerr << "[ERROR] server returned empty file name\n";
         return;
     }
 
     // Ensure parent directories exist (supports nested paths in file_name)
-    std::filesystem::path out_path(resp.file_name);
+    std::filesystem::path out_path(reply.command.file_name);
     if (!out_path.parent_path().empty()) {
         std::error_code ec;
         std::filesystem::create_directories(out_path.parent_path(), ec);
@@ -175,16 +186,16 @@ void pull() {
     // Open in binary + truncate to ALWAYS overwrite if it exists
     std::ofstream out(out_path, std::ios::binary | std::ios::out | std::ios::trunc);
     if (!out) {
-        std::cerr << "[ERROR] could not open " << resp.file_name << " for writing\n";
+        std::cerr << "[ERROR] could not open " << reply.command.file_name << " for writing\n";
         return;
     }
 
     // Write bytes exactly as received
-    if (!resp.data.empty())
-        out.write(resp.data.data(), static_cast<std::streamsize>(resp.data.size()));
+    if (!reply.command.data.empty())
+        out.write(reply.command.data.data(), static_cast<std::streamsize>(reply.command.data.size()));
     out.close();
 
-    std::cout << "Pulled " << resp.file_name << " (" << resp.data.size() << " bytes)\n";
+    std::cout << "Pulled " << reply.command.file_name << " (" << reply.command.data.size() << " bytes)\n";
 }
 
 int main(int argc, char* argv[]) {

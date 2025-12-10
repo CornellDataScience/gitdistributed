@@ -51,22 +51,15 @@ std::vector<char> Message::serialize(Message &message) {
     else if(message_type == MessageType::VIEW_REPLY){
         serialized = ViewReply::serialize((ViewReply *) &message);
     }
+    else if(message_type == MessageType::FORWARDED_REQUEST) {
+        serialized = ForwardedRequest::serialize((ForwardedRequest *) &message);
+    }
+    else if(message_type == MessageType::BACKUP_REPLY) {
+        serialized = BackupReply::serialize((BackupReply *) &message);
+    }
 
     return serialized;
 }
-
-// Message Message::deserialize(const char* data) {
-//     MessageType message_type = Message::peek_type(data);
-//     Message* msg;
-    
-//     if (message_type == MessageType::CLIENT_REQUEST) {
-//         msg = new ClientRequest();
-//         ClientRequest::deserialize(data, *msg);
-//     } else if (message_type == MessageType::CLIENT_REPLY) {
-//         msg = new ClientReply();ClientRequest request = ClientRequest
-//     }
-    
-//     return &msg;}
 
 // ClientRequest
 ClientRequest::ClientRequest() {
@@ -177,16 +170,90 @@ void ClientReply::deserialize(char* data, ClientReply &reply) {
     reply.command = command;
 }
 
+// Forwarded request from primary to backup
+ForwardedRequest::ForwardedRequest() :
+    client_request(),
+    sender_address()
+{
+    this->type = MessageType::FORWARDED_REQUEST;
+}
 
 // Forwarded request from primary to backup
-class ForwardedRequest : public Message {
-    
-};
+ForwardedRequest::ForwardedRequest(ClientRequest request, std::string sender_address) :
+    client_request(request),
+    sender_address(sender_address)
+{
+    this->type = MessageType::FORWARDED_REQUEST;
+}
 
-// Backup's acknowledge of request
-class BackupReply : public Message {
+std::vector<char> ForwardedRequest::serialize(ForwardedRequest *request) {
+    std::vector<char> buffer;
 
-};
+    // append message type
+    append_to_buffer(buffer, request->type);
+
+    // append primary address
+    append_to_buffer(buffer, request->sender_address);
+
+    // append ClientRequest
+    std::vector<char>  clientReqBuffer = ClientRequest::serialize(&(request->client_request));
+    append_to_buffer(buffer, clientReqBuffer);
+
+    return buffer;
+}
+
+
+void ForwardedRequest::deserialize(char* data, ForwardedRequest &request) {
+    // 1. Skip message type
+    data += sizeof(MessageType);
+
+    // 2. Deserialize address
+    int str_len = read_int(data);
+    data += sizeof(int);
+    request.sender_address = std::string(data, str_len);
+    data += str_len;
+
+    // 4. Deserialize ClientRequest
+    ClientRequest::deserialize(data, request.client_request);
+}
+
+BackupReply::BackupReply(ForwardedRequest request, std::string sender_address) :
+    forwarded_request(request),
+    sender_address(sender_address)
+{
+    this->type = MessageType::BACKUP_REPLY;
+}
+
+std::vector<char> BackupReply::serialize(BackupReply *reply) {
+    std::vector<char> buffer;
+
+    // append message type
+    append_to_buffer(buffer, reply->type);
+
+    // append backup address
+    append_to_buffer(buffer, reply->sender_address);
+
+    // append FoorwardedRequest
+    std::vector<char>  forwarded_req_buff = ForwardedRequest::serialize(&(reply->forwarded_request));
+    append_to_buffer(buffer, forwarded_req_buff);
+
+    return buffer;
+}
+
+
+void BackupReply::deserialize(char* data, BackupReply& reply) {
+    // 1. Skip message type
+    data += sizeof(MessageType);
+
+    // 2. Deserialize address
+    int str_len = read_int(data);
+    data += sizeof(int);
+    reply.sender_address = std::string(data, str_len);
+    data += str_len;
+
+    // 4. Deserialize ForwardedRequest
+    ForwardedRequest::deserialize(data, reply.forwarded_request);
+}
 
 ViewReply::ViewReply() {
     this->type = MessageType::VIEW_REPLY;

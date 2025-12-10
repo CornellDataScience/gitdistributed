@@ -20,3 +20,4 @@ Command deserializeCommand(char *buffer);
 size_t serializeCommand(const Command &cmd, char *buff);
 
 int read_int(const char *buff);
+char* read_bytes(const char *buff, int n);

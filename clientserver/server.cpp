@@ -18,33 +18,67 @@ GitApp gitApp;
 
 std::string server_id;
 
-View view; 
+View view;
+int backup_fd = -1;
+
+void forward_request(ClientRequest request, int backup_fd);
 
 void handle_connection(int connected_fd) {
     while (true) {
+        bool is_primary = server_id == view.primary;
+        std::cout << "is_primary: " << is_primary << std::endl;
+        
         std::vector<char> buffer = std::vector<char>(BUFFER_SIZE);
         
         bool received = server.receive_message(buffer.data(), connected_fd);
         std::cout << received << std::endl;
         if (received) {
-            ClientRequest request = ClientRequest();
-            std::cout << "Received client message" << std::endl;
-            ClientRequest::deserialize(buffer.data(), request);
-            std::cout << "Deserialized message" << std::endl;
+            if (is_primary) {
+                ClientRequest request = ClientRequest();
+                std::cout << "Received client message" << std::endl;
+                ClientRequest::deserialize(buffer.data(), request);
+                std::cout << "Deserialized message" << std::endl;
 
-            Command resp;
-            // Critical section
-            {
-                std::unique_lock<std::mutex> gitapp_lock(gitApp.gitAppMutex);
-                resp = gitApp.handle_client_req(Command{request.command_type, request.file_name, request.file_data.data()});
+                // Forward request
+                if (view.backup != "") {
+                    forward_request(request, backup_fd);
+                }
+
+                Command resp;
+                // Critical section
+                {
+                    std::unique_lock<std::mutex> gitapp_lock(gitApp.gitAppMutex);
+                    resp = gitApp.handle_client_req(Command{request.command_type, request.file_name, request.file_data.data()});
+                }
+
+                std::cout << "Handled request" << std::endl;
+                ClientReply reply = ClientReply(resp);
+                // std::cout << reply.command.file_name << std::endl;
+                // std::cout << reply.command.data << std::endl;
+                server.send_message(reply, connected_fd);
+                std::cout << "Sent response to client " << connected_fd << std::endl;
             }
+            else {
+                //backup
+                ForwardedRequest request = ForwardedRequest();
+                std::cout << "Received forwarded request" << std::endl;
+                ForwardedRequest::deserialize(buffer.data(), request);
+                std::cout << "Deserialized message" << std::endl;
 
-            std::cout << "Handled request" << std::endl;
-            ClientReply reply = ClientReply(resp);
-            // std::cout << reply.command.file_name << std::endl;
-            // std::cout << reply.command.data << std::endl;
-            server.send_message(reply, connected_fd);
-            std::cout << "Sent response to client " << connected_fd << std::endl;
+                Command resp;
+                // Critical section
+                {
+                    std::unique_lock<std::mutex> gitapp_lock(gitApp.gitAppMutex);
+                    resp = gitApp.handle_client_req(Command{request.client_request.command_type, request.client_request.file_name, request.client_request.file_data.data()});
+                }
+
+                std::cout << "Handled request" << std::endl;
+                BackupReply reply = BackupReply(request, server_id);
+                // std::cout << reply.command.file_name << std::endl;
+                // std::cout << reply.command.data << std::endl;
+                server.send_message(reply, connected_fd);
+                std::cout << "Sent response to primary " << connected_fd << std::endl;
+            }
         } else {
             // if errno == 0, connection is closed
             if (errno != 0) {
@@ -53,6 +87,18 @@ void handle_connection(int connected_fd) {
             
             return;
         }
+    }
+}
+
+void forward_request(ClientRequest request, int backup_fd) {
+    std::cout << "backup_fd: " << backup_fd << std::endl;
+    ForwardedRequest forwardRequest = ForwardedRequest(request, server_id);
+    server.send_message(forwardRequest, backup_fd);
+    std::cout << "Sent forwarded request" << std::endl;
+
+    bool received = server.receive_message(std::vector<char>(BUFFER_SIZE).data(), backup_fd);
+    if (received) {
+        std::cout << "Received backup reply" << std::endl;
     }
 }
 
@@ -71,7 +117,7 @@ void ping(int viewserver_fd) {
             ViewReply::deserialize(buffer.data(), req);
             
             view = View{req.view_num, req.primary, req.backup};
-            std::cout << "view updated" << std::endl;
+            std::cout << "view: " << view.view_num << " " << view.primary << " " << view.backup << std::endl;
         }
         else
         {
@@ -99,6 +145,24 @@ int main(int argc, char *argv[]) {
     // Create connection to view server and start pinging
     int viewserver_fd = server.connect(VIEWSERVER_IP, VIEWSERVER_PORT);
     std::thread(ping, viewserver_fd).detach();
+
+    while (view.view_num != 2) {
+        // busy wait
+    }
+    
+    bool is_primary = server_id == view.primary;
+
+    if (is_primary) {
+        // Connect to backup
+        int colon_index = view.backup.find(":");
+        std::string backup_ip = view.backup.substr(0, colon_index);
+        int backup_port = std::stoi(view.backup.substr(colon_index + 1));
+
+        backup_fd = server.connect(backup_ip, backup_port);
+        std::thread(handle_connection, backup_fd).detach();
+
+        std::cout << "Connected to backup " << view.backup << std::endl;
+    }
 
     std::cout << server.port << std::endl;
     std::cout << server.socket_fd << std::endl;
