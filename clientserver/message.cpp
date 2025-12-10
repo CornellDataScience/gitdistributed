@@ -196,8 +196,11 @@ std::vector<char> ForwardedRequest::serialize(ForwardedRequest *request) {
     append_to_buffer(buffer, request->sender_address);
 
     // append ClientRequest
-    std::vector<char>  clientReqBuffer = ClientRequest::serialize(&(request->client_request));
-    append_to_buffer(buffer, clientReqBuffer);
+    // std::vector<char>  clientReqBuffer = ClientRequest::serialize(&(request->client_request));
+    // append_to_buffer(buffer, clientReqBuffer);
+
+    std::vector<char> clientReqBuffer = ClientRequest::serialize(&(request->client_request));
+    buffer.insert(buffer.end(), clientReqBuffer.begin(), clientReqBuffer.end());
 
     return buffer;
 }
@@ -234,8 +237,11 @@ std::vector<char> BackupReply::serialize(BackupReply *reply) {
     append_to_buffer(buffer, reply->sender_address);
 
     // append FoorwardedRequest
-    std::vector<char>  forwarded_req_buff = ForwardedRequest::serialize(&(reply->forwarded_request));
-    append_to_buffer(buffer, forwarded_req_buff);
+    // std::vector<char>  forwarded_req_buff = ForwardedRequest::serialize(&(reply->forwarded_request));
+    // append_to_buffer(buffer, forwarded_req_buff);
+
+    std::vector<char> forwarded_req_buff = ForwardedRequest::serialize(&(reply->forwarded_request));
+    buffer.insert(buffer.end(), forwarded_req_buff.begin(), forwarded_req_buff.end());
 
     return buffer;
 }
