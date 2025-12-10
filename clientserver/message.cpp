@@ -51,22 +51,15 @@ std::vector<char> Message::serialize(Message &message) {
     else if(message_type == MessageType::VIEW_REPLY){
         serialized = ViewReply::serialize((ViewReply *) &message);
     }
+    else if(message_type == MessageType::FORWARDED_REQUEST) {
+        serialized = ForwardedRequest::serialize((ForwardedRequest *) &message);
+    }
+    else if(message_type == MessageType::BACKUP_REPLY) {
+        serialized = BackupReply::serialize((BackupReply *) &message);
+    }
 
     return serialized;
 }
-
-// Message Message::deserialize(const char* data) {
-//     MessageType message_type = Message::peek_type(data);
-//     Message* msg;
-    
-//     if (message_type == MessageType::CLIENT_REQUEST) {
-//         msg = new ClientRequest();
-//         ClientRequest::deserialize(data, *msg);
-//     } else if (message_type == MessageType::CLIENT_REPLY) {
-//         msg = new ClientReply();ClientRequest request = ClientRequest
-//     }
-    
-//     return &msg;}
 
 // ClientRequest
 ClientRequest::ClientRequest() {
@@ -177,6 +170,13 @@ void ClientReply::deserialize(char* data, ClientReply &reply) {
     reply.command = command;
 }
 
+// Forwarded request from primary to backup
+ForwardedRequest::ForwardedRequest() :
+    client_request(),
+    sender_address()
+{
+    this->type = MessageType::FORWARDED_REQUEST;
+}
 
 // Forwarded request from primary to backup
 ForwardedRequest::ForwardedRequest(ClientRequest request, std::string sender_address) :

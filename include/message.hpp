@@ -74,6 +74,7 @@ public:
     ClientRequest client_request;
     std::string sender_address;
         
+    ForwardedRequest();
     ForwardedRequest(ClientRequest request, std::string sender_address);
     static std::vector<char> serialize(ForwardedRequest *request);
     static void deserialize(char* data, ForwardedRequest &request);
@@ -81,6 +82,7 @@ public:
 
 // Backup's acknowledge of request
 class BackupReply : public Message {
+public:
     ForwardedRequest forwarded_request;
     std::string sender_address;
         
